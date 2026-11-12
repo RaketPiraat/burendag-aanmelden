@@ -1,0 +1,1 @@
+var API_URL = "https://script.google.com/macros/s/AKfycbzWlA-pW7moiZ_8SPscx2jn-ckA_p3mHcW_eS3pFj27FdM9z-SeeaDC9WH7758WWlnR/exec"; var SITE_URL = "https://raketpiraat.github.io/burendag-aanmelden/test/";
