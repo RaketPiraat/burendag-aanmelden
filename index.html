@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8FBC5A">
+  <!-- de wijziglink bevat het token; geef de url nooit door aan andere sites (zoals de betaalpagina) -->
+  <meta name="referrer" content="no-referrer">
+  <title>Aanmelden – Burendag Westvaartpark</title>
+  <link rel="stylesheet" href="stijl.css">
+</head>
+<body>
+  <header class="kop">
+    <div class="vlaggetjes" aria-hidden="true"></div>
+    <div class="kop-binnen">
+      <p class="kop-boven">Samen eten in de wijk</p>
+      <h1 id="titel">Burendag Westvaartpark</h1>
+      <p class="kop-wanneer" id="wanneer"></p>
+    </div>
+  </header>
+
+  <main class="inhoud">
+    <noscript>
+      <section class="melding melding-fout">
+        <h2>Deze pagina heeft JavaScript nodig</h2>
+        <p>Zet JavaScript aan in je browser, of mail de commissie: <a href="mailto:onswestvaartpark@gmail.com">onswestvaartpark@gmail.com</a></p>
+      </section>
+    </noscript>
+    <p class="laden" id="laden" role="status">Even geduld, de aanmelding wordt geladen…</p>
+
+    <!-- algemene meldingen: gesloten, nog niet open, onbekende link, geen verbinding -->
+    <section class="melding" id="melding" hidden tabindex="-1" aria-live="polite"></section>
+
+    <form id="formulier" novalidate hidden>
+      <p class="intro" id="intro">Meld je huishouden aan voor het wijkfeest. Het invullen duurt een paar minuten.</p>
+
+      <section class="blok" aria-labelledby="kop-adres">
+        <h2 id="kop-adres"><span class="nr" aria-hidden="true">1</span> Jullie adres</h2>
+        <div class="veld" data-veld="adres.straat">
+          <label for="straat">Straat</label>
+          <select id="straat" name="straat" autocomplete="address-line1" required>
+            <option value="">Kies je straat</option>
+          </select>
+        </div>
+        <div class="veld veld-smal" data-veld="adres.huisnummer">
+          <label for="huisnummer">Huisnummer</label>
+          <input id="huisnummer" name="huisnummer" type="text" inputmode="text" autocomplete="off" required aria-describedby="hint-huisnummer">
+          <p class="hint" id="hint-huisnummer">Met eventuele toevoeging, bijvoorbeeld 27 of 27a.</p>
+        </div>
+        <p class="hint" id="hint-adres-vast" hidden>Je adres kun je hier niet wijzigen. Verhuisd of een fout? Mail de commissie.</p>
+      </section>
+
+      <section class="blok" aria-labelledby="kop-contact">
+        <h2 id="kop-contact"><span class="nr" aria-hidden="true">2</span> Contactpersoon</h2>
+        <div class="rij">
+          <div class="veld" data-veld="contact.voornaam">
+            <label for="voornaam">Voornaam</label>
+            <input id="voornaam" name="voornaam" type="text" autocomplete="given-name" required>
+          </div>
+          <div class="veld" data-veld="contact.achternaam">
+            <label for="achternaam">Achternaam <span class="optioneel">(mag leeg)</span></label>
+            <input id="achternaam" name="achternaam" type="text" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="veld" data-veld="contact.email">
+          <label for="email">E-mailadres</label>
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="hint-email">
+          <p class="hint" id="hint-email">Hier sturen we de bevestiging en je persoonlijke wijziglink naartoe.</p>
+        </div>
+        <div class="veld" data-veld="contact.telefoon">
+          <label for="telefoon">Telefoonnummer <span class="optioneel">(mag leeg)</span></label>
+          <input id="telefoon" name="telefoon" type="tel" inputmode="tel" autocomplete="tel">
+        </div>
+      </section>
+
+      <section class="blok" aria-labelledby="kop-personen" data-veld="personen">
+        <h2 id="kop-personen"><span class="nr" aria-hidden="true">3</span> Wie komen er?</h2>
+        <p class="hint">Zet iedereen van jullie huishouden erop die meedoet, jezelf ook.</p>
+        <ol class="personen" id="personen"></ol>
+        <button type="button" class="knop knop-licht" id="persoon-erbij">+ Nog iemand toevoegen</button>
+      </section>
+
+      <section class="blok" aria-labelledby="kop-hulp">
+        <h2 id="kop-hulp"><span class="nr" aria-hidden="true">4</span> Een handje helpen?</h2>
+        <fieldset class="keuzes" data-veld="hulp" id="hulp">
+          <legend>Waar kunnen we op je rekenen? <span class="optioneel">(niet verplicht)</span></legend>
+        </fieldset>
+        <fieldset class="keuzes" data-veld="spullen" id="spullen">
+          <legend>Spullen die je kunt uitlenen <span class="optioneel">(vul een aantal in)</span></legend>
+        </fieldset>
+      </section>
+
+      <section class="blok" aria-labelledby="kop-betalen">
+        <h2 id="kop-betalen"><span class="nr" aria-hidden="true">5</span> Betalen</h2>
+        <div class="veld" data-veld="rekeninghouder">
+          <label for="rekeninghouder">Naam op de bankrekening <span class="optioneel">(mag leeg)</span></label>
+          <input id="rekeninghouder" name="rekeninghouder" type="text" autocomplete="cc-name" aria-describedby="hint-rekeninghouder">
+          <p class="hint" id="hint-rekeninghouder">Alleen nodig als je betaalt van een rekening die niet op jouw naam staat, zodat we de betaling herkennen.</p>
+          <p class="hint" id="hint-rekeninghouder-houden" hidden>Laat leeg om de eerder opgegeven naam te houden.</p>
+        </div>
+      </section>
+
+      <section class="blok" aria-labelledby="kop-toestemming">
+        <h2 id="kop-toestemming"><span class="nr" aria-hidden="true">6</span> Mogen we het onthouden?</h2>
+        <div class="privacy" id="privacy">
+          <p>Voor dit feest gebruiken we je gegevens alleen om de aanmelding, het eten en de betaling te regelen. Met de vinkjes hieronder kies je wat we daarna mogen bewaren. Alles staat standaard uit.</p>
+          <ul>
+            <li><strong>Wat:</strong> je contactgegevens, de voornamen van wie meedoet, bij kinderen alleen geboortemaand en &#8209;jaar, en of je wilt helpen of spullen uitleent. Dieetwensen alleen als je daar apart een vinkje voor zet.</li>
+            <li><strong>Waarom:</strong> zodat we je volgend jaar opnieuw kunnen uitnodigen en je aanmelding alvast voor je kunnen invullen.</li>
+            <li><strong>Hoe lang:</strong> ben je twee edities op rij niet geweest, dan wissen we je gegevens.</li>
+            <li><strong>Wissen:</strong> in elke mail van ons staat het mailadres van de commissie. Mail ons en we verwijderen je gegevens.</li>
+          </ul>
+        </div>
+        <div class="vinkje">
+          <input type="checkbox" id="bewaren" name="bewaren">
+          <label for="bewaren">Bewaar onze gegevens voor de burendag van volgend jaar</label>
+        </div>
+        <div class="vinkje">
+          <input type="checkbox" id="dieetBewaren" name="dieetBewaren">
+          <label for="dieetBewaren">Bewaar ook onze dieetwensen en allergieën</label>
+        </div>
+        <div class="vinkje">
+          <input type="checkbox" id="activiteiten" name="activiteiten">
+          <label for="activiteiten">Je mag ons mailen over andere activiteiten in de wijk</label>
+        </div>
+      </section>
+
+      <!-- lokveld voor robots: mensen zien het niet en laten het leeg -->
+      <div class="lokveld" aria-hidden="true">
+        <label for="website">Website (niet invullen)</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <section class="bedrag" id="bedrag" aria-labelledby="kop-bedrag">
+        <h2 id="kop-bedrag" class="bedrag-kop">Te betalen</h2>
+        <div aria-live="polite" aria-atomic="true">
+          <p class="bedrag-totaal" id="bedrag-totaal">€ 0</p>
+          <ul class="bedrag-regels" id="bedrag-regels"></ul>
+          <p class="bedrag-let" id="bedrag-let" hidden></p>
+        </div>
+      </section>
+
+      <div class="foutoverzicht" id="foutoverzicht" role="alert" hidden tabindex="-1"></div>
+
+      <div class="knoppen">
+        <button type="submit" class="knop knop-hoofd" id="versturen">Aanmelden</button>
+        <button type="button" class="knop knop-rand" id="afmelden" hidden>Afmelden</button>
+      </div>
+    </form>
+
+    <!-- bij BESTAAT_AL -->
+    <section class="melding melding-keuze" id="bestaat-al" hidden tabindex="-1" aria-labelledby="kop-bestaat-al">
+      <h2 id="kop-bestaat-al">Dit adres is al aangemeld</h2>
+      <p id="bestaat-al-tekst">Iemand op dit adres heeft zich al aangemeld. Wil je die aanmelding aanpassen? Vraag dan de persoonlijke link opnieuw aan; die komt naar het e-mailadres van die aanmelding.</p>
+      <div class="knoppen">
+        <button type="button" class="knop knop-hoofd" id="link-opnieuw">Stuur mijn wijziglink opnieuw</button>
+        <button type="button" class="knop knop-rand" id="tweede-huishouden">Wij zijn een tweede huishouden op dit adres</button>
+        <button type="button" class="knop knop-tekst" id="terug-naar-formulier">Terug naar het formulier</button>
+      </div>
+    </section>
+
+    <!-- na succes -->
+    <section class="klaar" id="klaar" hidden tabindex="-1" aria-labelledby="kop-klaar">
+      <h2 id="kop-klaar">Gelukt!</h2>
+      <p id="klaar-tekst"></p>
+      <div class="betaalblok" id="betaalblok" hidden>
+        <p class="bedrag-totaal" id="klaar-bedrag"></p>
+        <a class="knop knop-hoofd" id="betaalknop" hidden rel="noopener noreferrer">Nu betalen</a>
+        <p id="betaal-volgt" hidden>De betaallink volgt per mail.</p>
+      </div>
+      <div class="wijziglink" id="wijziglink-blok" hidden>
+        <h3>Jullie persoonlijke wijziglink</h3>
+        <p>Bewaar deze link goed: hiermee kun je later je aanmelding aanpassen of afmelden. Hij staat ook in de bevestigingsmail.</p>
+        <p class="link"><a id="wijziglink"></a></p>
+        <button type="button" class="knop knop-licht" id="kopieer">Kopieer de link</button>
+        <span class="gekopieerd" id="gekopieerd" role="status"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="voet">
+    <p>Vragen? Mail de commissie: <a id="contact-voet" href="mailto:onswestvaartpark@gmail.com">onswestvaartpark@gmail.com</a></p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="gedeeld/leeftijd.js"></script>
+  <script src="gedeeld/adrescode.js"></script>
+  <script src="gedeeld/bedrag.js"></script>
+  <script src="gedeeld/validatie.js"></script>
+  <script src="verzoek.js"></script>
+  <script src="api.js"></script>
+  <script src="formulier.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
