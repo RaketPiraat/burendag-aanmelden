@@ -113,6 +113,10 @@ async function start() {
 function toonEvenement(config) {
   const e = config.evenement;
   if (e.naam) { $('titel').textContent = e.naam; document.title = 'Aanmelden – ' + e.naam; }
+  // kopregel boven de titel (instelling evenement.kop); leeg = niet tonen
+  const kop = typeof e.kop === 'string' ? e.kop.trim() : '';
+  $('kop-boven').textContent = kop;
+  $('kop-boven').hidden = kop === '';
   const delen = [datumTekst(e.datum, true), e.locatie].filter(Boolean);
   $('wanneer').textContent = delen.join(' · ');
   if (config.datums && config.datums.sluit) {
@@ -136,6 +140,7 @@ function toonWijzigen(token, aanmelding) {
   vulVelden(velden, staat.inst);
   $('straat').disabled = true;
   $('huisnummer').readOnly = true;
+  $('straatElders').readOnly = true;
   $('hint-adres-vast').hidden = false;
   $('hint-rekeninghouder-houden').hidden = false;
   $('rekeninghouder').setAttribute('aria-describedby', 'hint-rekeninghouder hint-rekeninghouder-houden');
@@ -252,7 +257,7 @@ async function linkOpnieuw() {
   zetBezig(true);
   let antwoord;
   try {
-    antwoord = await stuurVerzoek({ actie: 'linkOpnieuw', adres: { straat: velden.straat, huisnummer: velden.huisnummer, toevoeging: '' }, website: velden.website });
+    antwoord = await stuurVerzoek({ actie: 'linkOpnieuw', adres: { straat: velden.straat, straatElders: velden.straatElders, huisnummer: velden.huisnummer, toevoeging: '' }, website: velden.website });
   } catch (e) {
     zetBezig(false);
     geenVerbinding();

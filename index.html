@@ -13,7 +13,7 @@
   <header class="kop">
     <div class="vlaggetjes" aria-hidden="true"></div>
     <div class="kop-binnen">
-      <p class="kop-boven">Samen eten in de wijk</p>
+      <p class="kop-boven" id="kop-boven" hidden></p>
       <h1 id="titel">Burendag Westvaartpark</h1>
       <p class="kop-wanneer" id="wanneer"></p>
     </div>
@@ -42,10 +42,18 @@
             <option value="">Kies je straat</option>
           </select>
         </div>
-        <div class="veld veld-smal" data-veld="adres.huisnummer">
-          <label for="huisnummer">Huisnummer</label>
-          <input id="huisnummer" name="huisnummer" type="text" inputmode="text" autocomplete="off" required aria-describedby="hint-huisnummer">
-          <p class="hint" id="hint-huisnummer">Met eventuele toevoeging, bijvoorbeeld 27 of 27a.</p>
+        <div class="rij">
+          <!-- alleen bij "Elders (andere straat)": de straat zelf intypen -->
+          <div class="veld" data-veld="adres.straatElders" id="veld-straat-elders" hidden>
+            <label for="straatElders">Straat</label>
+            <input id="straatElders" name="straatElders" type="text" maxlength="100" autocomplete="off" aria-describedby="hint-straat-elders">
+            <p class="hint" id="hint-straat-elders">De straat waar je woont.</p>
+          </div>
+          <div class="veld veld-smal" data-veld="adres.huisnummer">
+            <label for="huisnummer">Huisnummer</label>
+            <input id="huisnummer" name="huisnummer" type="text" inputmode="text" autocomplete="off" required aria-describedby="hint-huisnummer">
+            <p class="hint" id="hint-huisnummer">Met eventuele toevoeging, bijvoorbeeld 27 of 27a.</p>
+          </div>
         </div>
         <p class="hint" id="hint-adres-vast" hidden>Je adres kun je hier niet wijzigen. Verhuisd of een fout? Mail de commissie.</p>
       </section>
@@ -132,7 +140,7 @@
       </div>
 
       <section class="bedrag" id="bedrag" aria-labelledby="kop-bedrag">
-        <h2 id="kop-bedrag" class="bedrag-kop">Te betalen</h2>
+        <h2 id="kop-bedrag" class="bedrag-kop">Jouw bijdrage</h2>
         <div aria-live="polite" aria-atomic="true">
           <p class="bedrag-totaal" id="bedrag-totaal">€ 0</p>
           <ul class="bedrag-regels" id="bedrag-regels"></ul>

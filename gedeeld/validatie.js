@@ -40,11 +40,23 @@ function valStraat_(straat, straten) {
   return null;
 }
 
+// Bij Elders (andere straat): de getypte straat is verplicht, maximaal 100 tekens en mag geen straat uit de lijst zijn.
+function valStraatElders_(fouten, waarde, straten) {
+  var t = valTekstveld_(fouten, 'adres.straatElders', waarde, true, 100, 'de straat');
+  if (t !== '' && t.length <= 100 && valStraat_(t, straten) !== null) {
+    valFout_(fouten, 'adres.straatElders', 'Deze straat staat in de lijst. Kies hem daar in plaats van Elders.');
+  }
+  return t;
+}
+
 // Valideert straat en huisnummer (met eventuele aparte toevoeging). Geeft het schone adres terug.
+// Bij Elders komt de getypte straat erbij als straatElders; bij een straat uit de lijst wordt straatElders genegeerd.
 function valAdres_(fouten, adres, instellingen) {
   var a = valIsObject_(adres) ? adres : {};
-  var straat = valStraat_(a.straat, instellingen.straten);
+  var elders = isElders(a.straat);
+  var straat = elders ? STRAAT_ELDERS : valStraat_(a.straat, instellingen.straten);
   if (straat === null) valFout_(fouten, 'adres.straat', 'Kies een straat uit de lijst.');
+  var straatElders = elders ? valStraatElders_(fouten, a.straatElders, instellingen.straten) : null;
   var nr = null;
   try {
     nr = normaliseerHuisnummer(a.huisnummer);
@@ -68,7 +80,9 @@ function valAdres_(fouten, adres, instellingen) {
     valFout_(fouten, 'adres.huisnummer', 'Vul een geldig huisnummer in, bijvoorbeeld 27 of 27a.');
     return null;
   }
-  return { straat: straat, huisnummer: nr.huisnummer, toevoeging: toevoeging };
+  var schoon = { straat: straat, huisnummer: nr.huisnummer, toevoeging: toevoeging };
+  if (elders) schoon.straatElders = straatElders;
+  return schoon;
 }
 
 function valContact_(fouten, contact) {

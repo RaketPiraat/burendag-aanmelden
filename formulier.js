@@ -57,9 +57,30 @@ function spullenRij(wat) {
   ]);
 }
 
+// Bij "Elders (andere straat)" verschijnt het verplichte veld Straat naast het huisnummer.
+function toonStraatElders() {
+  const elders = isElders($('straat').value);
+  $('veld-straat-elders').hidden = !elders;
+  $('straatElders').required = elders;
+}
+
+// Rij met eigen tekst voor spullen die niet in de Spullenlijst staan (wordt { wat: <tekst>, aantal }).
+function andersRij(wat, aantal) {
+  const n = ++volgnummer;
+  return el('div', { class: 'spul spul-anders' }, [
+    el('label', { for: 'anders-' + n, tekst: 'Iets anders:' }),
+    el('input', { type: 'text', id: 'anders-' + n, class: 'anders-wat', maxlength: '100', autocomplete: 'off', value: wat || '' }),
+    el('input', { type: 'number', id: 'anders-aantal-' + n, class: 'anders-aantal', min: '0', max: '50', inputmode: 'numeric',
+      placeholder: '0', 'aria-label': 'Aantal (iets anders)', value: aantal || '' })
+  ]);
+}
+
 function bouwFormulier(config, inst) {
   const straat = $('straat');
   config.straten.forEach((naam) => straat.appendChild(el('option', { value: naam, tekst: naam })));
+  // vaste keuze achteraan, niet uit het tabblad Straten (zie gedeeld/adrescode.js)
+  straat.appendChild(el('option', { value: STRAAT_ELDERS, tekst: 'Elders (andere straat)' }));
+  straat.addEventListener('change', toonStraatElders);
 
   const hulp = $('hulp');
   config.hulpblokken.forEach((b) => hulp.appendChild(vinkje('hulp-' + b.code, 'hulp', b.code, b.naam)));
@@ -67,7 +88,7 @@ function bouwFormulier(config, inst) {
 
   const spullen = $('spullen');
   config.spullen.forEach((wat) => spullen.appendChild(spullenRij(wat)));
-  if (!config.spullen.length) spullen.hidden = true;
+  spullen.appendChild(andersRij('', ''));
 
   $('persoon-erbij').addEventListener('click', () => {
     const kaart = voegPersoonToe(inst, null);
@@ -122,7 +143,7 @@ function voegPersoonToe(inst, persoon) {
       el('label', { for: id('toelichting') }, ['Toelichting bij dieet of allergie ', el('span', { class: 'optioneel', tekst: '(mag leeg)' })]),
       toelichting
     ]),
-    vinkje(id('ehbo'), id('ehbo'), 'ja', 'Heeft een EHBO-diploma', p.ehbo === true)
+    vinkje(id('ehbo'), id('ehbo'), 'ja', 'Is bevoegd hulpverlener (EHBO, BHV, arts of verpleegkundige) en staat stand-by', p.ehbo === true)
   ]);
 
   const wissel = () => { kindvelden.hidden = !kind.checked; };
@@ -180,11 +201,13 @@ function leesVelden(token, tweedeHuishouden) {
       ehbo: kaart.querySelector('input[name$=ehbo]').checked
     };
   });
-  const spullen = [...$('spullen').querySelectorAll('input.aantal')]
-    .filter((i) => i.value.trim() !== '' && i.value.trim() !== '0')
-    .map((i) => ({ wat: i.getAttribute('data-wat'), aantal: i.value.trim(), opmerking: '' }));
+  const spullen = spullenUitInvoer(
+    [...$('spullen').querySelectorAll('input.aantal')].map((i) => ({ wat: i.getAttribute('data-wat'), aantal: i.value })),
+    [...$('spullen').querySelectorAll('.spul-anders')].map((r) => ({
+      wat: r.querySelector('.anders-wat').value, aantal: r.querySelector('.anders-aantal').value
+    })));
   return {
-    straat: waarde('straat'), huisnummer: waarde('huisnummer'),
+    straat: waarde('straat'), straatElders: waarde('straatElders'), huisnummer: waarde('huisnummer'),
     voornaam: waarde('voornaam'), achternaam: waarde('achternaam'), email: waarde('email'), telefoon: waarde('telefoon'),
     rekeninghouder: waarde('rekeninghouder'),
     personen,
@@ -204,15 +227,19 @@ function vulVelden(velden, inst) {
     straat.appendChild(el('option', { value: velden.straat, tekst: velden.straat }));
   }
   straat.value = velden.straat || '';
+  $('straatElders').value = velden.straatElders || '';
+  toonStraatElders();
   $('personen').textContent = '';
   (velden.personen.length ? velden.personen : [{}]).forEach((p) => voegPersoonToe(inst, p));
   $('hulp').querySelectorAll('input').forEach((i) => { i.checked = velden.hulp.indexOf(i.value) !== -1; });
   const spullen = $('spullen');
-  velden.spullen.forEach((s) => {
-    let invoer = [...spullen.querySelectorAll('input.aantal')].find((i) => i.getAttribute('data-wat') === s.wat);
-    if (!invoer) { spullen.hidden = false; invoer = spullen.appendChild(spullenRij(s.wat)).querySelector('input'); }
-    invoer.value = String(s.aantal);
-  });
+  const lijstInvoer = [...spullen.querySelectorAll('input.aantal')];
+  const verdeeld = verdeelSpullen(velden.spullen, lijstInvoer.map((i) => i.getAttribute('data-wat')));
+  verdeeld.lijst.forEach((s) => { lijstInvoer.find((i) => i.getAttribute('data-wat') === s.wat).value = s.aantal; });
+  // eigen tekst (of een naam die niet meer in de lijst staat) in "Iets anders", met daaronder altijd een lege rij
+  spullen.querySelectorAll('.spul-anders').forEach((r) => r.remove());
+  verdeeld.anders.forEach((s) => spullen.appendChild(andersRij(s.wat, s.aantal)));
+  spullen.appendChild(andersRij('', ''));
   $('bewaren').checked = velden.bewaren;
   $('dieetBewaren').checked = velden.dieetBewaren;
   $('activiteiten').checked = velden.activiteiten;
@@ -286,6 +313,7 @@ function toonFouten(fouten) {
 
 function toonBedrag(inst) {
   const personen = verzoekUitFormulier(leesVelden('', false)).personen;
+  $('kop-bedrag').textContent = bijdrageKop(personen.length);
   const rekenbaar = personen.filter((p) => {
     try { bepaalGroep(p, inst); return true; } catch (e) { return false; }
   });

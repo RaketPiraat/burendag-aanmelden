@@ -1,5 +1,6 @@
 // Omzetten tussen formuliervelden en het verzoek aan het script. Alleen function/var op het hoogste niveau:
 // dit bestand draait via een <script>-tag in de browser en via test/hulp/laad.js in Node.
+// Vereist: gedeeld/adrescode.js (isElders).
 
 // Geboortemaand of -jaar van een kind als geheel getal; leeg of onzin wordt NaN, zodat valideerVerzoek
 // een fout geeft in plaats van het kind stilletjes als volwassene te tellen.
@@ -12,7 +13,14 @@ function verzoekTekst_(w) {
   return (w === undefined || w === null) ? '' : String(w);
 }
 
-// velden = { straat, huisnummer, voornaam, achternaam, email, telefoon, rekeninghouder,
+// Het adres voor het verzoek; bij Elders (andere straat) gaat de getypte straat mee als straatElders.
+function verzoekAdres_(v) {
+  var adres = { straat: verzoekTekst_(v.straat), huisnummer: verzoekTekst_(v.huisnummer), toevoeging: '' };
+  if (isElders(adres.straat)) adres.straatElders = verzoekTekst_(v.straatElders);
+  return adres;
+}
+
+// velden = { straat, straatElders (alleen bij Elders), huisnummer, voornaam, achternaam, email, telefoon, rekeninghouder,
 //   personen: [{ voornaam, kind, maand, jaar, dieet, toelichting, eetMee, ehbo }], hulp, spullen,
 //   bewaren, dieetBewaren, activiteiten, website, token, tweedeHuishouden }
 function verzoekUitFormulier(velden) {
@@ -34,7 +42,7 @@ function verzoekUitFormulier(velden) {
   }
   var verzoek = {
     actie: v.token ? 'wijzigen' : 'aanmelden',
-    adres: { straat: verzoekTekst_(v.straat), huisnummer: verzoekTekst_(v.huisnummer), toevoeging: '' },
+    adres: verzoekAdres_(v),
     contact: {
       voornaam: verzoekTekst_(v.voornaam), achternaam: verzoekTekst_(v.achternaam),
       email: verzoekTekst_(v.email), telefoon: verzoekTekst_(v.telefoon)
@@ -65,7 +73,7 @@ function veldenUitAanmelding(aanmelding, token) {
     };
   });
   return {
-    straat: verzoekTekst_(h.straat), huisnummer: verzoekTekst_(h.huisnummer) + verzoekTekst_(h.toevoeging),
+    straat: verzoekTekst_(h.straat), straatElders: verzoekTekst_(h.straatElders), huisnummer: verzoekTekst_(h.huisnummer) + verzoekTekst_(h.toevoeging),
     voornaam: verzoekTekst_(h.voornaam), achternaam: verzoekTekst_(h.achternaam),
     email: verzoekTekst_(h.email), telefoon: verzoekTekst_(h.telefoon), rekeninghouder: '',
     personen: personen,
@@ -88,6 +96,40 @@ function instellingenUitConfig(config) {
     hulpblokken: config.hulpblokken || [],
     spullen: config.spullen || []
   };
+}
+
+// Spullen uit het formulier: rijen uit de Spullenlijst (lijst = [{ wat, aantal }]) tellen mee als er een aantal
+// boven 0 staat; rijen "Iets anders" (anders = [{ wat, aantal }]) als er tekst of een aantal staat. Een rij met
+// een aantal maar zonder tekst gaat ook mee, zodat valideerVerzoek om de tekst vraagt in plaats van hem stil te negeren.
+function spullenUitInvoer(lijst, anders) {
+  var uit = [];
+  var i, aantal;
+  for (i = 0; i < (lijst || []).length; i++) {
+    aantal = verzoekTekst_(lijst[i].aantal).trim();
+    if (aantal !== '' && aantal !== '0') uit.push({ wat: verzoekTekst_(lijst[i].wat), aantal: aantal, opmerking: '' });
+  }
+  for (i = 0; i < (anders || []).length; i++) {
+    var wat = verzoekTekst_(anders[i].wat).trim();
+    aantal = verzoekTekst_(anders[i].aantal).trim();
+    if (wat !== '' || (aantal !== '' && aantal !== '0')) uit.push({ wat: wat, aantal: aantal, opmerking: '' });
+  }
+  return uit;
+}
+
+// Het omgekeerde bij wijzigen: opgeslagen spullen met een naam uit de Spullenlijst (namen) gaan naar die rij,
+// al het andere (eigen tekst, of een naam die de commissie uit de lijst haalde) naar "Iets anders".
+function verdeelSpullen(spullen, namen) {
+  var uit = { lijst: [], anders: [] };
+  for (var i = 0; i < (spullen || []).length; i++) {
+    var s = { wat: verzoekTekst_(spullen[i].wat), aantal: verzoekTekst_(spullen[i].aantal) };
+    if ((namen || []).indexOf(s.wat) !== -1) uit.lijst.push(s); else uit.anders.push(s);
+  }
+  return uit;
+}
+
+// Kop boven het bedrag op het formulier: één persoon betaalt 'Jouw bijdrage', meer personen 'Jullie bijdrage'.
+function bijdrageKop(aantalPersonen) {
+  return aantalPersonen >= 2 ? 'Jullie bijdrage' : 'Jouw bijdrage';
 }
 
 // Wat de klaarpagina over betalen zegt, met dezelfde betekenis als de betaalregel in de mail (sjabloon.js maakBetaalregel).

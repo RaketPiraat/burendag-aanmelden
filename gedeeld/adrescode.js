@@ -28,7 +28,20 @@ function sleutelStraat(naam) {
   return String(naam === null || naam === undefined ? '' : naam).replace(/\s+/g, '').toLowerCase();
 }
 
+// Vaste keuze voor buren uit een andere straat; staat niet in het tabblad Straten, zodat de commissie hem niet kan breken.
+// De getypte straat gaat apart mee (adres.straatElders); de adrescode is ELD-<huisnummer><toevoeging>.
+var STRAAT_ELDERS = 'Elders';
+var AFKORTING_ELDERS = 'ELD';
+
+function isElders(straat) {
+  return sleutelStraat(straat) === sleutelStraat(STRAAT_ELDERS);
+}
+
 function maakAdrescode(straat, huisnummer, toevoeging, straten) {
+  if (isElders(straat)) {
+    var nrElders = controleerHuisnummerEnToevoeging(huisnummer, toevoeging);
+    return AFKORTING_ELDERS + '-' + nrElders.huisnummer + nrElders.toevoeging;
+  }
   var gezocht = sleutelStraat(straat);
   var gevonden = null;
   for (var i = 0; i < straten.length; i++) {
