@@ -308,20 +308,23 @@ function toonKlaar(antwoord, actie, velden) {
     wijzigen: ['Je wijziging is opgeslagen', 'Je krijgt een bevestiging per mail met het nieuwe overzicht.'],
     afmelden: ['Jullie zijn afgemeld', 'Jammer dat jullie er niet bij zijn. Je krijgt een bevestiging per mail. Al betaald? De commissie neemt contact met je op.']
   };
-  $('kop-klaar').textContent = teksten[actie][0];
-  $('klaar-tekst').textContent = teksten[actie][1];
-
   // Zelfde betekenis als de betaalregel in de mail (zie betaalWeergave in verzoek.js).
   const betaal = betaalWeergave(antwoord, actie);
+  const stap = klaarBetaalstap(betaal, teksten[actie][0]);
+  $('kop-klaar').textContent = stap.kop;
+  $('klaar-tekst').textContent = teksten[actie][1];
+  $('afrondblok').hidden = !stap.laatsteStap;
+  $('afrond-regel').textContent = stap.regel || '';
+  $('klaar').classList.toggle('klaar-afronden', stap.laatsteStap);
   const betaalteksten = {
     betalen: 'Nog te betalen: ' + euro(betaal.openstaand),
     volgt: 'Nog te betalen: ' + euro(betaal.openstaand),
     betaald: 'Je bijdrage is al betaald.',
     terug: 'Je hebt te veel betaald, dit krijg je terug.'
   };
-  $('betaalblok').hidden = betaal.soort === 'geen';
+  // Bij 'betalen' staan regel en knop bovenaan (afrondblok); het gewone betaalblok is er dan niet.
+  $('betaalblok').hidden = betaal.soort === 'geen' || betaal.soort === 'betalen';
   $('klaar-bedrag').textContent = betaalteksten[betaal.soort] || '';
-  $('betaalknop').hidden = betaal.soort !== 'betalen';
   if (betaal.soort === 'betalen') $('betaalknop').href = betaal.link;
   $('betaal-volgt').hidden = betaal.soort !== 'volgt';
 

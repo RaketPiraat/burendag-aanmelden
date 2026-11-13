@@ -325,6 +325,22 @@ fieldset.heeft-fout, section.heeft-fout { box-shadow: -4px 0 0 var(--fout); padd
 }
 .betaalblok .knop { width: 100%; }
 .betaalblok p { margin: 0.4rem 0 0; }
+.afrondblok {
+  background: var(--geel);
+  border: 2px solid var(--groen-diep);
+  border-radius: var(--rond);
+  padding: 1rem;
+  margin: 0.5rem 0 1.25rem;
+  color: var(--groen-diep);
+  box-shadow: 5px 5px 0 var(--groen);
+}
+.afrond-regel { margin: 0 0 0.9rem; font-size: 1.35rem; font-weight: 900; line-height: 1.25; }
+.afrondblok .knop { width: 100%; min-height: 3.5rem; font-size: 1.3rem; }
+@media (min-width: 30rem) {
+  .afrondblok .knop { width: auto; min-width: 16rem; }
+}
+.klaar-afronden #klaar-tekst, .klaar-afronden .wijziglink { font-size: 0.95rem; color: var(--grijs); }
+.klaar-afronden .wijziglink h3 { font-size: 1rem; }
 .wijziglink { border-top: 2px dashed var(--rand); margin-top: 1.25rem; padding-top: 1rem; }
 .wijziglink h3 { margin: 0 0 0.3rem; font-size: 1.1rem; }
 .link { word-break: break-all; background: var(--groen-zacht); padding: 0.6rem 0.75rem; border-radius: 10px; font-size: 0.95rem; }

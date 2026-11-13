@@ -147,3 +147,15 @@ function betaalWeergave(antwoord, actie) {
   else if (openstaand > 0) soort = link ? 'betalen' : 'volgt';
   return { soort: soort, openstaand: openstaand, link: soort === 'betalen' ? link : null };
 }
+
+// Kop en eerste regel van de klaarpagina. betaal = uitkomst van betaalWeergave; standaardKop = de gewone kop van de actie.
+// Alleen als er nog betaald moet worden met een veilige link (soort 'betalen') is betalen de laatste stap van het aanmelden:
+// kop 'Bijna klaar!' en een regel met het openstaande bedrag, direct gevolgd door de betaalknop. Anders: gewone kop, geen regel.
+// -> { kop, regel, laatsteStap }
+function klaarBetaalstap(betaal, standaardKop) {
+  var b = betaal || {};
+  if (b.soort !== 'betalen') return { kop: standaardKop, regel: null, laatsteStap: false };
+  var n = Number(b.openstaand) || 0;
+  var bedrag = '\u20AC ' + (n % 1 ? n.toFixed(2).replace('.', ',') : String(n));
+  return { kop: 'Bijna klaar!', regel: 'Rond je aanmelding af door nu ' + bedrag + ' te betalen.', laatsteStap: true };
+}
