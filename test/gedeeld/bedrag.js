@@ -29,11 +29,15 @@ function bepaalBetaalstatus(bedrag, betaald) {
   return ontvangen < verschuldigd ? 'te weinig' : 'terug te betalen';
 }
 
-// De url van de betaallink met precies dit bedrag (numerieke gelijkheid), anders null.
-function zoekBetaallink(bedrag, betaallinks) {
-  var gezocht = Number(bedrag);
+// De url van de betaallink met precies dit bedrag (gelijk in hele centen), anders null. Een rij zonder url telt niet mee.
+// Met vandaag ('JJJJ-MM-DD') wordt een verlopen link (geldigTot < vandaag) overgeslagen; zonder vandaag geen controle.
+function zoekBetaallink(bedrag, betaallinks, vandaag) {
+  var gezocht = Math.round(Number(bedrag) * 100);
   for (var i = 0; i < (betaallinks || []).length; i++) {
-    if (Number(betaallinks[i].bedrag) === gezocht) return betaallinks[i].url;
+    var l = betaallinks[i];
+    if (!l.url || Math.round(Number(l.bedrag) * 100) !== gezocht) continue;
+    if (vandaag && l.geldigTot && String(l.geldigTot) < vandaag) continue;
+    return l.url;
   }
   return null;
 }
