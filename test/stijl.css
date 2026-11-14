@@ -187,8 +187,15 @@ input[type=checkbox], input[type=radio] {
   .keuzes { grid-template-columns: 1fr 1fr; }
   .keuzes > legend { grid-column: 1 / -1; }
 }
-.spul { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.25rem 0; }
-.spul label { font-weight: 500; }
+/* Spullen: een rij is naam + invoerveld van 5.5rem; twee kolommen pas als ze echt passen, anders loopt de tweede kolom buiten de kaart. */
+@media (min-width: 30rem) {
+  .keuzes[data-veld="spullen"] { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 42rem) {
+  .keuzes[data-veld="spullen"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.spul { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.25rem 0; min-width: 0; }
+.spul label { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .spul input { width: 5.5rem; flex: none; text-align: center; }
 .spul-anders label { flex: none; }
 .spul-anders .anders-wat { flex: 1 1 auto; width: auto; min-width: 0; text-align: left; }
