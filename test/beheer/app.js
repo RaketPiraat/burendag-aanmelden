@@ -349,9 +349,11 @@ function bouwSchil_() {
       el('nav', { class: 'zijmenu', 'aria-label': 'Hoofdmenu' },
         merk_(),
         el('div', { class: 'menu-lijst', id: 'menu-zij' }),
-        el('div', { class: 'gebruiker-blok' }, gebruikerBlok(), el('div', { class: 'menu-lijst' }, vernieuw, uit))),
+        el('div', { class: 'gebruiker-blok' }, gebruikerBlok(), el('div', { class: 'menu-lijst' }, vernieuw, uit),
+          el('span', { class: 'bijgewerkt', role: 'status', 'aria-live': 'off' }))),
       el('div', { class: 'schil-rechts' },
         el('header', { class: 'bovenbalk' }, merk_(),
+          el('span', { class: 'bijgewerkt bijgewerkt-boven', 'aria-hidden': 'true' }),
           el('div', { style: 'display:flex;gap:2px' },
             el('button', { type: 'button', class: 'icoonknop', 'aria-label': 'Vernieuwen', onclick: function () { synchroniseer_(); } }, maakIcoon('vernieuwen')),
             el('button', { type: 'button', class: 'icoonknop', 'aria-label': 'Uitloggen', onclick: uitloggen_ }, maakIcoon('uitloggen')))),
@@ -453,8 +455,15 @@ function leegScherm_() {
       : 'De schermen worden een voor een klaargezet. Kom straks nog eens terug.'));
 }
 
+// Stille regel 'Bijgewerkt om hh:mm' (of 'Bezig met bijwerken…' zolang er gelezen wordt); de bewaarde gegevens blijven intussen gewoon staan.
+function tekenBijgewerkt_() {
+  var tekst = beheerApp.bezig ? 'Bezig met bijwerken…' : beheerApp.bijgewerktOp ? 'Bijgewerkt om ' + tijdTekst_(beheerApp.bijgewerktOp) : '';
+  Array.prototype.forEach.call(document.querySelectorAll('.bijgewerkt'), function (k) { k.textContent = tekst; });
+}
+
 // Meldingen boven het scherm: geen verbinding, wat nog onderweg is en wat niet gelukt is.
 function tekenStroken_() {
+  tekenBijgewerkt_();
   var vak = document.getElementById('stroken');
   if (!vak) return;
   var stroken = [];

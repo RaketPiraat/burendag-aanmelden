@@ -190,7 +190,10 @@ function overzichtKerncijfers_(o) {
     tegels.push(overzichtTegel_('Ontvangen', euro(ontvangen), null));
   }
   tegels.push(overzichtTegel_('Nog te ontvangen', euro(o.teOntvangen), open ? meervoud_(open, 'huishouden', 'huishoudens') : null));
-  tegels.push(overzichtTegel_('Verwacht banksaldo', euro(o.verwachtBanksaldo), 'volgens de laatst ingelezen bankafschriften'));
+  // blinde kascontrole: null betekent 'nog niet te zien', nooit € 0,00
+  tegels.push(o.verwachtBanksaldo === null || o.verwachtBanksaldo === undefined
+    ? overzichtTegel_('Verwacht banksaldo', 'Zichtbaar na de kascontrole', 'zodat je het saldo zelf natelt')
+    : overzichtTegel_('Verwacht banksaldo', euro(o.verwachtBanksaldo), 'volgens de laatst ingelezen bankafschriften'));
   return el('section', { class: 'tegels', 'aria-label': 'Kerncijfers' }, tegels);
 }
 

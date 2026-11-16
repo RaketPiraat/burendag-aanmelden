@@ -83,6 +83,9 @@ svg { flex: none; }
 }
 .gebruiker-tekst { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
 .gebruiker-naam { font-weight: 800; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bijgewerkt { font-size: 0.75rem; color: var(--rand); padding: 4px 12px 0; display: block; }
+.bijgewerkt:empty { display: none; }
+.bovenbalk .bijgewerkt-boven { margin-left: auto; padding: 0 8px; color: var(--wit); opacity: 0.8; }
 .gebruiker-sub { font-size: 0.75rem; color: var(--rand); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* telefoon: bovenbalk en menu onderaan */
@@ -420,3 +423,39 @@ noscript .kaart { margin: 1rem; }
   .bon-foto-knop { flex: 1 1 14rem; }
   .bon-foto-knoppen .knop { flex: 1 1 10rem; }
 }
+
+/* ---- scherm Kas ---- */
+.kas-kolommen { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.kasboek { flex: 2 1 28rem; min-width: 0; }
+.kas-paneel { flex: 1 1 18rem; min-width: 0; gap: 0.875rem; }
+.kas-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.kas-chip {
+  min-height: 44px; padding: 0 1rem; border-radius: 999px; font-family: inherit; font-size: 0.9375rem; font-weight: 800; cursor: pointer;
+  background: var(--wit); color: var(--groen-donker); border: 1.5px solid var(--rand);
+}
+.kas-chip:hover { background: var(--groen-zacht); }
+.kas-chip[aria-pressed="true"] { background: var(--groen-donker); color: var(--wit); border-color: var(--groen-donker); }
+.kasboek-lijst { margin-top: 0.5rem; }
+.kasrij { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; }
+.kasrij-wacht { background: var(--geel-zacht); margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; border-radius: var(--rond-klein); }
+.kasrij-datum { flex: 0 0 3.25rem; font-size: 0.875rem; font-weight: 700; color: var(--grijs); padding-top: 2px; white-space: nowrap; }
+.kasrij-tekst { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.kasrij-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.625rem; margin-top: 2px; }
+.kasrij-link { font-size: 0.875rem; font-weight: 800; display: inline-flex; align-items: center; min-height: 32px; }
+.kasrij-bedrag { flex: 0 0 auto; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.kasrij-plus { color: var(--groen-donker); }
+.kasboek-meer { display: flex; justify-content: center; padding-top: 0.75rem; border-top: 1px solid var(--lijn); }
+.kas-paneelkop { display: flex; align-items: center; gap: 0.625rem; color: var(--groen-donker); }
+.kas-noot { font-size: 0.9375rem; color: var(--grijs); }
+.kas-noot-groot { color: var(--inkt); font-size: 1rem; }
+.kas-formulier { display: flex; flex-direction: column; gap: 0.75rem; }
+.kas-bedragveld { display: flex; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0 0.875rem; border: 1.5px solid var(--rand); border-radius: var(--rond-klein); background: var(--wit); }
+.kas-bedragveld:focus-within { outline: 3px solid var(--geel); outline-offset: 2px; box-shadow: 0 0 0 5px var(--groen-diep); }
+.kas-euro { color: var(--grijs); font-weight: 800; }
+.kas-bedragveld input { flex: 1; min-width: 0; border: 0; outline: 0; box-shadow: none; background: transparent; font-family: inherit; font-size: 1.0625rem; font-weight: 700; color: var(--inkt); min-height: 44px; font-variant-numeric: tabular-nums; }
+.kas-uitslag { display: flex; gap: 0.625rem; align-items: flex-start; padding: 0.75rem 0.875rem; border-radius: var(--rond-klein); font-size: 0.9375rem; font-weight: 700; line-height: 1.45; }
+.kas-uitslag .pictogram { flex: 0 0 auto; margin-top: 2px; }
+.kas-uitslag-goed { background: var(--groen-zacht); color: var(--groen-diep); }
+.kas-uitslag-let { background: var(--geel-zacht); color: var(--inkt); }
+.kas-slot { display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem 0.875rem; border-radius: var(--rond-klein); background: var(--groen-zacht); color: var(--groen-diep); font-weight: 800; }
+@media (max-width: 799px) { .kas-paneel { order: -1; flex-basis: 100%; } }
