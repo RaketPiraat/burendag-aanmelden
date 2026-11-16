@@ -159,6 +159,7 @@ function inloggenGelukt(antwoord) {
     var weg = vorige ? wachtrijLees(beheerOpslag).length : 0;
     beheerOpslag.wis('momentopname'); beheerOpslag.wis('wachtrij'); beheerOpslag.wis('mislukt');
     beheerApp.momentopname = null;
+    if (typeof bonVergeet === 'function') bonVergeet();
     if (weg > 0) beheerApp.bericht = 'Er ' + (weg === 1 ? 'stond' : 'stonden') + ' nog ' + meervoud_(weg, 'handeling', 'handelingen') + ' van een ander account op dit apparaat. Die ' + (weg === 1 ? 'is' : 'zijn') + ' niet verstuurd en verwijderd.';
   }
   beheerApp.bezig = false;
@@ -188,6 +189,7 @@ function uitloggen_() {
   if (open > 0 && !window.confirm('Er ' + (open === 1 ? 'staat' : 'staan') + ' nog ' + meervoud_(open, 'handeling', 'handelingen') + ' klaar om te versturen. Als je nu uitlogt, ' + (open === 1 ? 'gaat die' : 'gaan die') + ' verloren. Toch uitloggen?')) return;
   ['sessie', 'momentopname', 'wachtrij', 'mislukt', 'email'].forEach(function (n) { beheerOpslag.wis(n); });
   beheerApp.momentopname = null;
+  if (typeof bonVergeet === 'function') bonVergeet();
   beheerApp.sessie = null;
   beheerApp.bijgewerktOp = 0;
   beheerApp.tekstInloggen = '';

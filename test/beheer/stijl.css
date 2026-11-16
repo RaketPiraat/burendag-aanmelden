@@ -381,3 +381,42 @@ noscript .kaart { margin: 1rem; }
   .lid { grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; }
   .lid-zijde { grid-column: auto; flex-direction: column; align-items: flex-end; justify-content: flex-start; padding-left: 0; }
 }
+
+/* ---- scherm Bon indienen ---- */
+.bon-boven { display: flex; flex-direction: column; gap: 1rem; }
+.bon-formulier { gap: 1rem; padding: 1.25rem; }
+.bon-formulier .veld { gap: 0.375rem; }
+.bon-hulp { font-size: 0.8125rem; font-weight: 600; color: var(--grijs); }
+.bon-formulier input[type=text][aria-invalid=true], .bon-formulier input[type=date][aria-invalid=true] { border-color: var(--fout); }
+.bon-foto-leeg { display: flex; flex-direction: column; gap: 0.5rem; }
+.bon-foto-knoppen { display: flex; flex-wrap: wrap; gap: 0.625rem; }
+.bon-foto-knop {
+  flex: 1 1 100%; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 120px; border-radius: var(--rond-klein); font-family: inherit; font-size: 1rem; font-weight: 800; cursor: pointer;
+  background: var(--groen-zacht); color: var(--groen-donker); border: 2px dashed var(--groen);
+}
+.bon-foto-knop:hover { background: #E3EFD2; }
+.bon-foto-knoppen .knop { flex: 1 1 100%; }
+.bon-foto-gekozen { display: flex; gap: 0.875rem; align-items: flex-start; }
+.bon-miniatuur { flex: none; width: 88px; height: 88px; object-fit: cover; border-radius: var(--rond-klein); border: 1px solid var(--rand); background: var(--groen-zacht); }
+.bon-miniatuur-leeg { display: flex; align-items: center; justify-content: center; color: var(--groen-donker); }
+.bon-foto-tekst { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; flex: 1; }
+.bon-foto-status { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 0.9375rem; }
+.bon-foto-ok { color: var(--groen-donker); }
+.bon-foto-fout { color: var(--fout); }
+.bon-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.bon-cat {
+  min-height: 48px; padding: 0 1rem; border-radius: var(--rond-klein); font-family: inherit; font-size: 0.9375rem; font-weight: 800; cursor: pointer;
+  background: var(--wit); color: var(--inkt); border: 1.5px solid var(--rand);
+}
+.bon-cat[aria-pressed=true] { background: var(--groen-diep); color: var(--wit); border-color: var(--groen-diep); }
+.bon-cat:focus-visible { outline: 3px solid var(--geel); outline-offset: 2px; box-shadow: 0 0 0 5px var(--groen-diep); }
+.bon-indienen { min-height: 52px; font-size: 1.0625rem; }
+.bon-ontvangen { align-items: center; text-align: center; gap: 0.75rem; padding: 1.75rem 1.25rem; }
+.bon-vink { width: 56px; height: 56px; border-radius: 50%; background: var(--groen-zacht); color: var(--groen-donker); display: flex; align-items: center; justify-content: center; }
+.bon-ontvangen h2 { font-size: 1.5rem; }
+@media (min-width: 56rem) {
+  .bon-boven { max-width: 36rem; }
+  .bon-foto-knop { flex: 1 1 14rem; }
+  .bon-foto-knoppen .knop { flex: 1 1 10rem; }
+}
