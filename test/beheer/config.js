@@ -1,0 +1,1 @@
+var API_URL = "https://script.google.com/macros/s/AKfycbzWlA-pW7moiZ_8SPscx2jn-ckA_p3mHcW_eS3pFj27FdM9z-SeeaDC9WH7758WWlnR/exec"; var OAUTH_CLIENT_ID = "652824883730-9qvchat7uig3ec4u5fuu9ip7ubpgidlb.apps.googleusercontent.com"; var BEHEER_OMGEVING = "test"; var LOKAAL = false;

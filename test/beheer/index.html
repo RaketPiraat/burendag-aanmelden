@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1E3A0E">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Beheer – Burendag Westvaartpark</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="pictogram.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="pictogram-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Burendag">
+  <link rel="preload" href="fonts/nunito-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="stijl.css">
+</head>
+<body>
+  <div id="app"><p class="laden" role="status"><span class="laadpunt"></span>Even geduld, de pagina wordt geladen…</p></div>
+  <noscript>
+    <section class="kaart">
+      <h2>Deze pagina heeft JavaScript nodig</h2>
+      <p>Zet JavaScript aan in je browser, of mail de commissie: <a href="mailto:onswestvaartpark@gmail.com">onswestvaartpark@gmail.com</a></p>
+    </section>
+  </noscript>
+  <script src="config.js"></script>
+  <script src="gedeeld/rechten.js"></script>
+  <script src="wachtrij.js"></script>
+  <script src="api.js"></script>
+  <script src="inloggen.js"></script>
+  <script src="app.js"></script>
+  <script src="scherm-overzicht.js"></script>
+  <script src="scherm-commissie.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="if(window.inloggenGisKlaar)inloggenGisKlaar()" onerror="if(window.inloggenGisFout)inloggenGisFout()"></script>
+  <!-- de schermen (overzicht, commissie, kas, begroting, geldbronnen, bon) komen hier, elk met registreerScherm(...) -->
+</body>
+</html>
