@@ -44,6 +44,8 @@ var OVERZICHT_OPDRACHT_TYPEN = {
 var OVERZICHT_TE_DOEN = {
   toeTeWijzen: { icoon: '<path d="M3 10h18L12 4z"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>', knop: 'Toewijzen' },
   terugbetalen: { icoon: 'kas', knop: 'Bekijken' },
+  geldbronTermijn: { icoon: 'geldbronnen', knop: 'Naar geldbronnen' },
+  geldbronVerantwoording: { icoon: 'geldbronnen', knop: 'Naar geldbronnen' },
   kascontrole: { icoon: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>', knop: 'Naar kascontrole' }
 };
 var OVERZICHT_TE_DOEN_STANDAARD = { icoon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', knop: 'Openen' };

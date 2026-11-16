@@ -459,3 +459,101 @@ noscript .kaart { margin: 1rem; }
 .kas-uitslag-let { background: var(--geel-zacht); color: var(--inkt); }
 .kas-slot { display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem 0.875rem; border-radius: var(--rond-klein); background: var(--groen-zacht); color: var(--groen-diep); font-weight: 800; }
 @media (max-width: 799px) { .kas-paneel { order: -1; flex-basis: 100%; } }
+
+/* ---- begroting ---- */
+.begr-kopknoppen { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+.begr-kopie { font-size: 0.875rem; font-weight: 700; color: var(--groen-donker); min-height: 1.25rem; }
+.begr-kopie:empty { display: none; }
+.begr-meldingen:empty { display: none; }
+.begr-paneel { gap: 0.875rem; }
+.begr-formulier { display: flex; flex-direction: column; gap: 1rem; }
+.begr-velden { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.begr-hulp { font-size: 0.8125rem; font-weight: 600; color: var(--grijs); }
+.begr-fouten { background: var(--fout-zacht); color: var(--fout); border-radius: var(--rond-klein); padding: 0.625rem 0.875rem; font-weight: 700; font-size: 0.9375rem; }
+.begr-fouten-leeg { display: none; }
+.begr-fouten ul { margin: 0; padding-left: 1.125rem; }
+.begr-tabelkaart { padding: 1.25rem 0.5rem 0.5rem; min-width: 0; }
+.begr-tabelkaart > h2 { padding: 0 0.75rem; }
+.begr-tabelkaart > p, .begr-tabelkaart > .leeg-klein { padding: 0.5rem 0.75rem; }
+table.tabel.begr-tabel { min-width: 0; table-layout: auto; }
+.begr-tabel .begr-post { text-align: left; font-size: 0.9375rem; font-weight: 800; color: var(--inkt); padding: 0.75rem; border-bottom: 1px solid var(--lijn); vertical-align: middle; }
+.begr-tabel .begr-post > span { display: block; font-weight: inherit; }
+.begr-tabel .begr-post .rij-sub { font-weight: 600; }
+.begr-tabel .begr-post .label { margin-top: 0.25rem; }
+.begr-stand-cel { width: 26%; min-width: 9rem; }
+.begr-stand-tekst { font-size: 0.8125rem; color: var(--grijs); margin-top: 0.25rem; }
+.balk.begr-balk-over > span { background: var(--fout); }
+.begr-rij-weg .begr-post, .begr-rij-weg .getal { opacity: 0.55; text-decoration: line-through; }
+.begr-rij-weg .begr-post .label { text-decoration: none; }
+.begr-totaal th, .begr-totaal td { font-weight: 900; border-bottom: 0; padding: 0.75rem; text-align: left; font-size: 0.9375rem; }
+.begr-totaal td.getal { text-align: right; }
+.begr-acties { display: flex; flex-wrap: wrap; gap: 0.375rem; justify-content: flex-end; }
+.knop-klein { min-height: 44px; padding: 0 0.75rem; font-size: 0.875rem; }
+.knop-klein .pictogram { width: 1rem; height: 1rem; }
+.knop-gevaar { color: var(--fout); border-color: var(--fout); }
+.knop-gevaar:hover { background: var(--fout-zacht); color: var(--fout); }
+.begr-buurtbudget { background: var(--geel-zacht); border-color: #E8DE6A; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.begr-bel { color: var(--inkt); display: flex; }
+.begr-bel-tekst { flex: 1 1 18rem; color: #3F4738; font-size: 0.9375rem; }
+.begr-bel-tekst .rij-titel { color: var(--inkt); font-size: 1rem; }
+@media (max-width: 719px) {
+  .begr-kopknoppen { align-items: stretch; width: 100%; }
+  .begr-tabel thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .begr-tabel, .begr-tabel tbody { display: block; }
+  .begr-tabel tr { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 0.75rem; padding: 0.75rem; border-bottom: 1px solid var(--lijn); }
+  .begr-tabel .begr-post, .begr-tabel td { border: 0; padding: 0; }
+  .begr-tabel .begr-post { grid-column: 1 / -1; }
+  .begr-tabel td.getal { text-align: left; display: flex; flex-direction: column; font-size: 1rem; }
+  .begr-tabel td[data-label]::before { content: attr(data-label); font-size: 0.75rem; font-weight: 700; color: var(--grijs); }
+  .begr-tabel .begr-stand-cel { grid-column: 1 / -1; width: auto; min-width: 0; }
+  .begr-tabel .begr-stand-cel::before { display: none; }
+  .begr-tabel .begr-actiecel { grid-column: 1 / -1; }
+  .begr-tabel .begr-actiecel:empty { display: none; }
+  .begr-acties { justify-content: flex-start; }
+  .begr-totaal { background: var(--groen-zacht); border-radius: var(--rond-klein); }
+  .begr-totaal th { grid-column: 1 / -1; padding: 0; }
+  .begr-totaal td:empty { display: none; }
+}
+.begr-actiecel { white-space: nowrap; width: 1%; }
+@media (min-width: 720px) {
+  .begr-acties { flex-wrap: nowrap; }
+  .begr-acties .knop-klein { width: 44px; padding: 0; }
+  .begr-acties .begr-knoptekst { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+
+/* ---- geldbronnen ---- */
+.gb-balk { background: var(--groen-diep); border-color: var(--groen-diep); color: var(--wit); flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.gb-balk-icoon { color: var(--geel); display: flex; }
+.gb-balk-tekst { flex: 1 1 18rem; min-width: 0; }
+.gb-balk-titel { font-weight: 900; font-size: 1.0625rem; overflow-wrap: anywhere; }
+.gb-balk-sub { font-size: 0.9375rem; color: var(--rand); }
+.gb-balk .knop.gb-balk-knop { background: var(--geel); color: var(--inkt); border-color: var(--geel); margin-left: auto; }
+.gb-balk .knop.gb-balk-knop:hover { background: var(--wit); color: var(--inkt); }
+.gb-filter { padding-top: 0.25rem; }
+.gb-bord { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-start; }
+.gb-kolom { flex: 1 1 13rem; min-width: 0; background: #EEF0E8; border-radius: var(--rond); padding: 0.75rem; display: flex; flex-direction: column; gap: 0.625rem; }
+.gb-bord-een .gb-kolom { flex-basis: 100%; }
+.gb-kolom h2 { margin: 0; font-size: 1rem; font-weight: 900; display: flex; justify-content: space-between; color: var(--inkt); }
+.gb-aantal { font-weight: 700; color: var(--grijs); }
+.gb-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.625rem; }
+.gb-lijst-breed { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); margin-top: 0.625rem; }
+.gb-leeg { border: 2px dashed var(--rand); border-radius: 12px; padding: 0.875rem; font-size: 0.875rem; color: var(--grijs); }
+.gb-kaart { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; text-align: left; background: var(--wit); border: 1px solid var(--rand); border-radius: 12px; padding: 0.875rem; font: inherit; color: inherit; }
+button.gb-kaart-knop { cursor: pointer; min-height: 44px; }
+button.gb-kaart-knop:hover { border-color: var(--groen-donker); box-shadow: 0 1px 6px rgba(30, 58, 14, 0.15); }
+button.gb-kaart-knop:focus-visible { outline: 3px solid var(--geel); outline-offset: 2px; box-shadow: 0 0 0 5px var(--groen-diep); }
+.gb-kaart-weg { opacity: 0.55; }
+.gb-kaart-kop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.25rem 0.5rem; }
+.gb-naam { font-weight: 900; font-size: 1rem; overflow-wrap: anywhere; }
+.gb-bedrag { font-weight: 800; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.gb-toelichting { font-size: 0.875rem; color: #3F4738; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.gb-regel { font-size: 0.8125rem; font-weight: 700; color: var(--grijs); }
+.gb-regel-let { color: var(--fout); }
+.gb-contact { overflow-wrap: anywhere; }
+.gb-kaart-voet { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.25rem; }
+.gb-afgewezen { background: #EEF0E8; border-radius: var(--rond); padding: 0.75rem; }
+.gb-afgewezen summary { cursor: pointer; font-weight: 900; min-height: 44px; display: flex; align-items: center; }
+.gb-bordkader { display: flex; flex-direction: column; gap: 1rem; }
+.gb-filterkader[hidden] { display: none; }
+@media (max-width: 719px) { .gb-balk .knop.gb-balk-knop { margin-left: 0; width: 100%; } .gb-verwijder { margin-left: 0; } }
+@media (min-width: 720px) { .gb-verwijder { margin-left: auto; } }
