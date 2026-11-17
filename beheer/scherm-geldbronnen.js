@@ -15,12 +15,13 @@ var GB_MAX_NAAM = 80;
 var GB_MAX_CONTACT = 120;
 var GB_MAX_TOELICHTING = 500;
 var GB_MAX_CENTEN = 10000000;
+var GB_MIJN = 'mijn'; // waarde van het filter 'Mijn geldbronnen'
 var GB_TYPEN = { geldbronOpslaan: true, geldbronVerwijderen: true };
 var GB_FOUT_VERSE_MS = 24 * 60 * 60 * 1000;
 var GB_ICOON_BEL = '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>';
 var GB_ICOON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 
-// formulier: null (dicht) of { id, nieuw, naam, soort, status, bedrag, termijn, verantwoording, contact, toelichting, fouten: [] }
+// formulier: null (dicht) of { id, nieuw, naam, soort, status, bedrag, termijn, verantwoording, contact, toelichting, opgepaktDoor, opgepaktDoorNaam, fouten: [] }
 var gbStaat = { email: '', formulier: null, filter: 'alle', afgewezenOpen: false, verborgen: {}, focus: false };
 var gbVak = null;   // { wortel, kop, melding, formulier, balk, tegels, filter, bord } van het getekende scherm
 var gbApp = null;   // de laatste staat van de schil
@@ -96,6 +97,19 @@ function gbDagenTekst_(dagen) {
   return 'nog ' + (dagen === 1 ? '1 dag' : dagen + ' dagen');
 }
 
+// Mijn e-mailadres in kleine letters, voor 'Mijn geldbronnen'.
+function gbIkEmail_() {
+  var m = (gbApp && gbApp.momentopname) || {};
+  return gbTekst_((m.ik && m.ik.email) || (gbApp && gbApp.email)).toLowerCase();
+}
+
+// De naam van een lid uit de kandidaten (actieve leden), of null.
+function gbKandidaatNaam_(m, email) {
+  var lijst = (m && m.geldbronnen && m.geldbronnen.kandidaten) || [];
+  for (var i = 0; i < lijst.length; i++) if (gbTekst_(lijst[i].email).toLowerCase() === email) return gbTekst_(lijst[i].naam) || email;
+  return null;
+}
+
 function gbMagBewerken_() {
   // ook als de editie op slot staat: verantwoorden loopt na de kascontrole door
   return heeftRecht((gbApp && gbApp.rechten) || [], 'geldbronnen_bewerken');
@@ -122,7 +136,8 @@ function gbZoek_(bronnen, id) {
 function gbBronnen_(m) {
   var bronnen = ((m && m.geldbronnen && m.geldbronnen.bronnen) || []).map(function (b) {
     return { id: b.id, naam: b.naam, soort: b.soort, bedragCenten: Number(b.bedragCenten) || 0, termijn: b.termijn || '', status: b.status, contact: b.contact || '',
-      toelichting: b.toelichting || '', verantwoording: b.verantwoording || '', wacht: false, weg: false };
+      toelichting: b.toelichting || '', verantwoording: b.verantwoording || '', opgepaktDoor: gbTekst_(b.opgepaktDoor).toLowerCase(),
+      opgepaktDoorNaam: gbTekst_(b.opgepaktDoorNaam), wacht: false, weg: false };
   });
   gbWachtend_(m).forEach(function (o) {
     var g = o.gegevens;
@@ -134,7 +149,15 @@ function gbBronnen_(m) {
     var centen = gbCenten_(String(g.bedrag === undefined || g.bedrag === null ? '' : g.bedrag));
     if (centen === null || typeof g.naam !== 'string' || g.naam.trim() === '' || typeof g.id !== 'string') return;
     var nieuw = { id: g.id, naam: g.naam.trim(), soort: g.soort, bedragCenten: centen, termijn: gbTekst_(g.termijn), status: g.status, contact: gbTekst_(g.contact),
-      toelichting: gbTekst_(g.toelichting), verantwoording: gbTekst_(g.verantwoording), wacht: true, weg: false };
+      toelichting: gbTekst_(g.toelichting), verantwoording: gbTekst_(g.verantwoording), opgepaktDoor: '', opgepaktDoorNaam: '', wacht: true, weg: false };
+    // zoals het achterwerk: een opdracht zonder dit veld laat wie de bron oppakt ongemoeid
+    if (g.opgepaktDoor === undefined || g.opgepaktDoor === null) {
+      if (plek !== -1) { nieuw.opgepaktDoor = bronnen[plek].opgepaktDoor; nieuw.opgepaktDoorNaam = bronnen[plek].opgepaktDoorNaam; }
+    } else {
+      nieuw.opgepaktDoor = gbTekst_(g.opgepaktDoor).toLowerCase();
+      var oud = plek !== -1 && bronnen[plek].opgepaktDoor === nieuw.opgepaktDoor ? bronnen[plek].opgepaktDoorNaam : '';
+      nieuw.opgepaktDoorNaam = nieuw.opgepaktDoor === '' ? '' : oud || gbKandidaatNaam_(m, nieuw.opgepaktDoor) || nieuw.opgepaktDoor;
+    }
     if (plek === -1) bronnen.push(nieuw); else bronnen[plek] = nieuw;
   });
   return bronnen;
@@ -200,7 +223,9 @@ function gbTekenBalk_(bronnen) {
 
 function gbTekenFilter_(bronnen) {
   var zicht = gbZichtbaar_(bronnen);
-  var opties = [['alle', 'Alles', zicht.length]].concat(GB_STATUSSEN.map(function (s) {
+  var ik = gbIkEmail_();
+  var mijn = ik === '' ? 0 : zicht.filter(function (b) { return b.opgepaktDoor === ik; }).length;
+  var opties = [['alle', 'Alles', zicht.length], [GB_MIJN, 'Mijn geldbronnen', mijn]].concat(GB_STATUSSEN.map(function (s) {
     return [s[0], s[1], zicht.filter(function (b) { return b.status === s[0]; }).length];
   }));
   gbVak.filter.replaceChildren(el('fieldset', { class: 'chips gb-filter' },
@@ -242,6 +267,7 @@ function gbKaart_(b) {
     b.toelichting ? el('span', { class: 'gb-toelichting' }, b.toelichting) : null,
     gbTermijnRegel_(b),
     el('span', { class: 'gb-regel gb-contact' }, b.contact ? b.contact : 'Contact nog onbekend'),
+    el('span', { class: 'gb-regel gb-opgepakt' }, b.opgepaktDoor ? 'Opgepakt door: ' + (b.opgepaktDoorNaam || b.opgepaktDoor) : 'Nog niemand'),
     el('span', { class: 'gb-kaart-voet' },
       el('span', { class: 'label ' + gbStatusKlasse_(b.status) }, gbLabel_(GB_STATUSSEN, b.status)),
       b.weg ? el('span', { class: 'label label-geel' }, 'wordt verwijderd') : b.wacht ? el('span', { class: 'label label-geel' }, 'wordt verwerkt') : null)
@@ -269,8 +295,10 @@ function gbKolom_(status, titel, bronnen) {
     el('ul', { class: 'gb-lijst' }, inhoud));
 }
 
-function gbTekenBord_(bronnen) {
-  var zicht = gbZichtbaar_(bronnen);
+function gbTekenBord_(alleBronnen) {
+  var ik = gbIkEmail_();
+  var bronnen = gbStaat.filter === GB_MIJN ? alleBronnen.filter(function (b) { return ik !== '' && b.opgepaktDoor === ik; }) : alleBronnen;
+  var zicht = gbZichtbaar_(alleBronnen);
   var vak = gbVak.bord;
   if (zicht.length === 0) {
     var kanBewerken = gbMagBewerken_();
@@ -288,10 +316,11 @@ function gbTekenBord_(bronnen) {
   var onderdelen = [];
   var kolommen = GB_STATUSSEN.filter(function (s) { return s[0] !== 'afgewezen'; });
   var toon = gbStaat.filter;
-  if (toon !== 'alle' && toon !== 'afgewezen') kolommen = kolommen.filter(function (s) { return s[0] === toon; });
-  if (toon !== 'afgewezen') onderdelen.push(el('div', { class: 'gb-bord' + (toon === 'alle' ? '' : ' gb-bord-een') }, kolommen.map(function (s) { return gbKolom_(s[0], s[1], bronnen); })));
+  var kolommenAlle = toon === 'alle' || toon === GB_MIJN;
+  if (!kolommenAlle && toon !== 'afgewezen') kolommen = kolommen.filter(function (s) { return s[0] === toon; });
+  if (toon !== 'afgewezen') onderdelen.push(el('div', { class: 'gb-bord' + (kolommenAlle ? '' : ' gb-bord-een') }, kolommen.map(function (s) { return gbKolom_(s[0], s[1], bronnen); })));
   var afgewezen = bronnen.filter(function (b) { return b.status === 'afgewezen'; });
-  if ((toon === 'alle' || toon === 'afgewezen') && afgewezen.length > 0) {
+  if ((kolommenAlle || toon === 'afgewezen') && afgewezen.length > 0) {
     var details = el('details', { class: 'gb-afgewezen' },
       el('summary', null, 'Afgewezen (' + afgewezen.filter(function (b) { return !b.weg; }).length + ')'),
       el('ul', { class: 'gb-lijst gb-lijst-breed' }, afgewezen.map(gbKaart_)));
@@ -363,8 +392,9 @@ function gbVoorbeeldToevoegen_() {
 function gbOpenFormulier_(b) {
   gbStaat.formulier = b
     ? { id: b.id, nieuw: false, naam: b.naam, soort: b.soort, status: b.status, bedrag: gbInvulBedrag_(b.bedragCenten), termijn: b.termijn || '', verantwoording: b.verantwoording || '',
-      contact: b.contact || '', toelichting: b.toelichting || '', fouten: [] }
-    : { id: gbNieuwId_(), nieuw: true, naam: '', soort: 'sponsoring', status: 'verkennen', bedrag: '', termijn: '', verantwoording: '', contact: '', toelichting: '', fouten: [] };
+      contact: b.contact || '', toelichting: b.toelichting || '', opgepaktDoor: b.opgepaktDoor || '', opgepaktDoorNaam: b.opgepaktDoorNaam || '', fouten: [] }
+    : { id: gbNieuwId_(), nieuw: true, naam: '', soort: 'sponsoring', status: 'verkennen', bedrag: '', termijn: '', verantwoording: '', contact: '', toelichting: '',
+      opgepaktDoor: '', opgepaktDoorNaam: '', fouten: [] };
   gbStaat.focus = true;
   gbTekenFormulier_();
 }
@@ -398,7 +428,7 @@ function gbOpslaan_() {
   f.fouten = gbControleer_(f);
   if (f.fouten.length > 0) { gbStaat.focus = false; gbTekenFormulier_(); gbVak.formulier.querySelector('.gb-fouten').focus(); return; }
   var gegevens = { id: f.id, naam: f.naam.trim(), soort: f.soort, bedrag: f.bedrag.trim(), termijn: f.termijn, status: f.status, contact: f.contact.trim(),
-    toelichting: f.toelichting.trim(), verantwoording: f.verantwoording };
+    toelichting: f.toelichting.trim(), verantwoording: f.verantwoording, opgepaktDoor: f.opgepaktDoor };
   gbStaat.formulier = null;
   gbApp.stuurOpdracht('geldbronOpslaan', gegevens);
   gbTekenFormulier_();
@@ -425,6 +455,16 @@ function gbKeuze_(id, lijst, waarde, bijWijziging) {
     lijst.map(function (o) { return el('option', { value: o[0] }, o[1]); }));
   keuze.value = waarde;
   return keuze;
+}
+
+// Keuzes voor 'Opgepakt door': Nog niemand, de actieve leden en (als hij er niet bij staat) de huidige keuze als 'niet meer actief'.
+function gbOpgepaktOpties_(f) {
+  var kandidaten = (gbApp.momentopname && gbApp.momentopname.geldbronnen && gbApp.momentopname.geldbronnen.kandidaten) || [];
+  var opties = [['', 'Nog niemand']].concat(kandidaten.map(function (k) { return [gbTekst_(k.email).toLowerCase(), gbTekst_(k.naam) || gbTekst_(k.email)]; }));
+  if (f.opgepaktDoor !== '' && !opties.some(function (o) { return o[0] === f.opgepaktDoor; })) {
+    opties.push([f.opgepaktDoor, (f.opgepaktDoorNaam || f.opgepaktDoor) + ' (niet meer actief)']);
+  }
+  return opties;
 }
 
 function gbTekenFormulier_() {
@@ -458,7 +498,8 @@ function gbTekenFormulier_() {
         gbVeld_('gb-bedrag', 'Bedrag', el('span', { class: 'kas-bedragveld' }, el('span', { class: 'kas-euro', 'aria-hidden': 'true' }, '€'), bedrag), 'Het maximum of het toegezegde bedrag. Vul 0 in als het nog onbekend is.'),
         gbVeld_('gb-termijn', 'Termijn (mag leeg)', termijn, 'De laatste dag om aan te vragen.'),
         gbVeld_('gb-verantwoording', 'Verantwoorden vóór (mag leeg)', verantwoording),
-        gbVeld_('gb-contact', 'Contact (mag leeg)', contact, 'Naam of e-mailadres van een contactpersoon bij de organisatie, geen buren.')),
+        gbVeld_('gb-contact', 'Contact (mag leeg)', contact, 'Naam of e-mailadres van een contactpersoon bij de organisatie, geen buren.'),
+        gbVeld_('gb-opgepakt', 'Opgepakt door', gbKeuze_('gb-opgepakt', gbOpgepaktOpties_(f), f.opgepaktDoor, function (w) { f.opgepaktDoor = w; }), 'Het commissielid dat deze bron oppakt. Alleen die persoon krijgt de herinneringen.')),
       gbVeld_('gb-toelichting', 'Toelichting (mag leeg)', toelichting, 'Voorwaarden, wat we achteraf moeten laten zien, enzovoort.'),
       el('div', { class: 'knoppen' },
         el('button', { type: 'submit', class: 'knop knop-hoofd' }, 'Opslaan'),
