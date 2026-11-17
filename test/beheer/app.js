@@ -237,10 +237,11 @@ function stuurWachtrij_() {
   return belofte;
 }
 
-function leesNu_() {
+// vers = true: de Vernieuwen-knop; het koppelscript vergeet dan zijn bewaarde gegevens en leest alles opnieuw uit de Sheet.
+function leesNu_(vers) {
   if (!beheerApp.sessie) return Promise.resolve();
   var token = sessieToken_();
-  return beheerVerzoek('beheerLezen').then(function (a) {
+  return beheerVerzoek('beheerLezen', vers === true ? { vers: true } : undefined).then(function (a) {
     if (sessieToken_() !== token) return; // laat antwoord: uitgelogd of een andere login, niets meer mee doen
     if (a && a.ok === true) {
       var gegevens = a.gegevens || (function () { var kopie = Object.assign({}, a); delete kopie.ok; return kopie; })();
@@ -267,13 +268,13 @@ function plan_(soort, ms) {
   beheerApp[sleutel] = setTimeout(function () { synchroniseer_(); }, ms);
 }
 
-function synchroniseer_() {
+function synchroniseer_(vers) {
   if (!beheerApp.sessie || beheerApp.bezig) return Promise.resolve();
   beheerApp.bezig = true;
   var nr = ++beheerApp.syncNr;
   function klaar() { if (nr === beheerApp.syncNr) beheerApp.bezig = false; vernieuwWeergave_(); }
   vernieuwWeergave_();
-  return stuurWachtrij_().then(function () { return beheerApp.sessie ? leesNu_() : undefined; }).then(klaar, klaar);
+  return stuurWachtrij_().then(function () { return beheerApp.sessie ? leesNu_(vers === true) : undefined; }).then(klaar, klaar);
 }
 
 // Voor de schermen: zet een opdracht in de wachtrij, probeert hem meteen te versturen en leest na 70 seconden opnieuw
@@ -342,7 +343,7 @@ function bouwSchil_() {
         el('span', { class: 'gebruiker-naam' }, naam),
         el('span', { class: 'gebruiker-sub' }, beheerApp.sessie.email || '')));
   }
-  var vernieuw = el('button', { type: 'button', class: 'menu-punt', onclick: function () { synchroniseer_(); } }, maakIcoon('vernieuwen'), el('span', null, 'Vernieuwen'));
+  var vernieuw = el('button', { type: 'button', class: 'menu-punt', onclick: function () { synchroniseer_(true); } }, maakIcoon('vernieuwen'), el('span', null, 'Vernieuwen'));
   var uit = el('button', { type: 'button', class: 'menu-punt', onclick: uitloggen_ }, maakIcoon('uitloggen'), el('span', null, 'Uitloggen'));
   app_().replaceChildren(
     el('div', { class: 'schil' },
@@ -355,7 +356,7 @@ function bouwSchil_() {
         el('header', { class: 'bovenbalk' }, merk_(),
           el('span', { class: 'bijgewerkt bijgewerkt-boven', 'aria-hidden': 'true' }),
           el('div', { style: 'display:flex;gap:2px' },
-            el('button', { type: 'button', class: 'icoonknop', 'aria-label': 'Vernieuwen', onclick: function () { synchroniseer_(); } }, maakIcoon('vernieuwen')),
+            el('button', { type: 'button', class: 'icoonknop', 'aria-label': 'Vernieuwen', onclick: function () { synchroniseer_(true); } }, maakIcoon('vernieuwen')),
             el('button', { type: 'button', class: 'icoonknop', 'aria-label': 'Uitloggen', onclick: uitloggen_ }, maakIcoon('uitloggen')))),
         el('main', { class: 'hoofd', id: 'hoofd' },
           el('div', { class: 'hoofd-binnen' },
