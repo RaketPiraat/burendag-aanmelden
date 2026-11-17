@@ -22,9 +22,13 @@ var KAS_GEEN_VERBINDING = 'Geen verbinding. Probeer het zo nog eens.';
 var kasStaat = { email: '', filter: 'alles', toon: KAS_PAGINA, bedrag: '', bezig: false, uitslag: null, focusTerug: false };
 var kasVak = null;   // { wortel, tegels, chips, lijst, paneel, paneelSoort } van het getekende scherm
 var kasApp = null;   // de laatste staat van de schil (herlees, momentopname)
+// De foto van een bon: welke bon er nu wordt opgehaald, de pdf-links die klaarstaan (blob-adressen) en de open foto.
+var kasFoto = { bezigId: '', pdf: {}, melding: '', overlay: null, url: '', toets: null, terug: '' };
+var KAS_MAX_PDF_LINKS = 5;
 
 function kasVergeetBijAnder_(email) {
   if (kasStaat.email === email) return;
+  kasVergeet();
   kasStaat = { email: email, filter: 'alles', toon: KAS_PAGINA, bedrag: '', bezig: false, uitslag: null, focusTerug: false };
 }
 
@@ -110,6 +114,107 @@ function kasBedragTekst_(regel) {
   return { tekst: euro(0), klasse: 'kasrij-bedrag' };
 }
 
+// ---- foto van de bon ----
+// De pagina vraagt de foto bij het achterwerk (beheerBonFoto, alleen met het kas-id) en toont hem hier in de pagina:
+// de map met bonnen is niet meer gedeeld, dus een Drive-link zou niemand openen.
+
+function kasMeldFoto_(tekst) {
+  kasFoto.melding = tekst || '';
+  if (!kasVak || !kasVak.fotoMelding) return;
+  kasVak.fotoMelding.textContent = kasFoto.melding;
+  kasVak.fotoMelding.hidden = kasFoto.melding === '';
+}
+
+function kasBonKnop_(regel) {
+  var pdf = kasFoto.pdf[regel.id];
+  if (pdf) return el('a', { class: 'kasrij-link', href: pdf, target: '_blank', rel: 'noopener noreferrer' }, 'Open de bon (pdf)');
+  var bezig = kasFoto.bezigId === regel.id;
+  return el('button', {
+    type: 'button', class: 'kasrij-link kasrij-knop', 'data-kas-id': regel.id, disabled: kasFoto.bezigId !== '', 'aria-busy': bezig ? 'true' : null,
+    onclick: function (e) { kasHaalFoto_(regel); }
+  }, bezig ? 'Bon ophalen…' : 'Bon bekijken');
+}
+
+function kasBase64NaarBlob_(data, type) {
+  var tekst = atob(data);
+  var bytes = new Uint8Array(tekst.length);
+  for (var i = 0; i < tekst.length; i++) bytes[i] = tekst.charCodeAt(i);
+  return new Blob([bytes], { type: type });
+}
+
+function kasHaalFoto_(regel) {
+  if (kasFoto.bezigId !== '') return;
+  kasFoto.bezigId = regel.id;
+  kasMeldFoto_('');
+  kasTekenLijst_();
+  var email = kasStaat.email;
+  var klaar = function () { kasFoto.bezigId = ''; kasTekenLijst_(); };
+  beheerVerzoek('beheerBonFoto', { kasId: regel.id }).then(function (a) {
+    if (kasStaat.email !== email) return; // uitgelogd of een ander account: niets meer tonen
+    if (a && a.ok === true && typeof a.data === 'string' && typeof a.mimeType === 'string') {
+      var blob;
+      try { blob = kasBase64NaarBlob_(a.data, a.mimeType); } catch (e) { blob = null; }
+      if (blob && /^image\/(jpeg|png)$/.test(a.mimeType)) { klaar(); kasToonFoto_(URL.createObjectURL(blob), regel.id); return; }
+      if (blob && a.mimeType === 'application/pdf') {
+        kasFoto.pdf[regel.id] = URL.createObjectURL(blob);
+        var ids = Object.keys(kasFoto.pdf);
+        while (ids.length > KAS_MAX_PDF_LINKS) { var oud = ids.shift(); URL.revokeObjectURL(kasFoto.pdf[oud]); delete kasFoto.pdf[oud]; }
+        klaar();
+        return;
+      }
+      kasMeldFoto_('Deze bon is niet te tonen.');
+    } else if (a && a.code === 'SESSIE' && typeof naarInloggen_ === 'function') {
+      kasFoto.bezigId = '';
+      naarInloggen_(a.melding || 'Je bent uitgelogd. Log opnieuw in.');
+      return;
+    } else {
+      kasMeldFoto_(a && typeof a.melding === 'string' && a.melding ? a.melding : 'De bon kon nu niet worden opgehaald. Probeer het zo nog eens.');
+    }
+    klaar();
+  }, function () {
+    if (kasStaat.email !== email) return;
+    kasMeldFoto_(KAS_GEEN_VERBINDING);
+    klaar();
+  });
+}
+
+// Toont de foto in een venster over de pagina. Sluiten met de knop, Escape of een klik naast de foto; het adres wordt dan vrijgegeven.
+function kasToonFoto_(url, terugId) {
+  kasSluitFoto_();
+  var sluit = el('button', { type: 'button', class: 'knop knop-hoofd foto-sluit', onclick: function () { kasSluitFoto_(); } }, 'Sluiten');
+  var overlay = el('div', {
+    class: 'foto-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Foto van de bon',
+    onclick: function (e) { if (e.target === overlay) kasSluitFoto_(); }
+  }, el('div', { class: 'foto-kader' }, el('img', { class: 'foto-beeld', src: url, alt: 'Foto van de bon' }), sluit));
+  kasFoto.toets = function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); kasSluitFoto_(); }
+    else if (e.key === 'Tab') { e.preventDefault(); sluit.focus(); } // de sluitknop is het enige om naar toe te gaan
+  };
+  document.addEventListener('keydown', kasFoto.toets);
+  kasFoto.overlay = overlay; kasFoto.url = url; kasFoto.terug = terugId || '';
+  document.body.appendChild(overlay);
+  sluit.focus();
+}
+
+function kasSluitFoto_() {
+  if (kasFoto.toets) document.removeEventListener('keydown', kasFoto.toets);
+  if (kasFoto.overlay && kasFoto.overlay.parentNode) kasFoto.overlay.parentNode.removeChild(kasFoto.overlay);
+  if (kasFoto.url) URL.revokeObjectURL(kasFoto.url);
+  var terugId = kasFoto.terug;
+  kasFoto.toets = null; kasFoto.overlay = null; kasFoto.url = ''; kasFoto.terug = '';
+  if (!terugId) return;
+  // de lijst is intussen opnieuw getekend: zoek de knop van deze bon weer op en zet de aandacht daar terug
+  var knoppen = document.querySelectorAll('.kasrij-knop');
+  for (var i = 0; i < knoppen.length; i++) if (knoppen[i].getAttribute('data-kas-id') === terugId) { knoppen[i].focus(); return; }
+}
+
+// Uitgelogd of een ander account: foto en pdf-adressen weg.
+function kasVergeet() {
+  kasSluitFoto_();
+  Object.keys(kasFoto.pdf).forEach(function (id) { URL.revokeObjectURL(kasFoto.pdf[id]); });
+  kasFoto.pdf = {}; kasFoto.bezigId = ''; kasFoto.melding = '';
+}
+
 function kasRij_(regel) {
   var b = kasBedragTekst_(regel);
   var status = kasStatusLabel_(regel.status);
@@ -122,7 +227,7 @@ function kasRij_(regel) {
       el('div', { class: 'kasrij-sub' },
         el('span', { class: 'rij-sub' }, kasCategorieTekst_(regel) + (wie ? ' · ' + wie : '')),
         status ? el('span', { class: status.klasse }, status.tekst) : null,
-        url ? el('a', { class: 'kasrij-link', href: url, target: '_blank', rel: 'noopener noreferrer' }, 'Bon bekijken') : null)),
+        url && regel.id ? kasBonKnop_(regel) : null)),
     el('span', { class: b.klasse }, b.tekst));
 }
 
@@ -281,8 +386,9 @@ function kasTeken_(container, staat) {
   var tegels = el('section', { class: 'tegels', 'aria-label': 'Saldo' });
   var chips = el('div', { class: 'kas-chips', role: 'group', 'aria-label': 'Filter op soort' });
   var lijst = el('div', { class: 'kasboek-inhoud' });
+  var fotoMelding = el('div', { class: 'strook strook-fout kas-fotomelding', role: 'alert', hidden: true });
   var paneel = el('section', { class: 'kaart kas-paneel', 'aria-label': 'Kascontrole' });
-  kasVak = { wortel: container, tegels: tegels, chips: chips, lijst: lijst, paneel: paneel, paneelSoort: '' };
+  kasVak = { wortel: container, tegels: tegels, chips: chips, lijst: lijst, paneel: paneel, paneelSoort: '', fotoMelding: fotoMelding };
   var acties = heeftRecht(staat.rechten || [], 'bon_indienen')
     ? el('div', { class: 'knoppen' }, el('a', { class: 'knop', href: '#bon' }, 'Bon indienen')) : null;
   container.replaceChildren(
@@ -291,12 +397,13 @@ function kasTeken_(container, staat) {
       acties),
     tegels,
     el('div', { class: 'kas-kolommen' },
-      el('section', { class: 'kaart kasboek', 'aria-label': 'Kasboek' }, el('h2', null, 'Kasboek'), chips, lijst),
+      el('section', { class: 'kaart kasboek', 'aria-label': 'Kasboek' }, el('h2', null, 'Kasboek'), chips, fotoMelding, lijst),
       paneel));
   kasTekenTegels_(m.kas);
   kasTekenChips_();
   kasTekenLijst_();
   kasTekenPaneel_(true);
+  kasMeldFoto_(kasFoto.melding);
 }
 
 // Nieuwe gegevens: saldi en lijst opnieuw, het kaartje van de kascontrole alleen als het van soort verandert (zodat een getypt bedrag blijft).

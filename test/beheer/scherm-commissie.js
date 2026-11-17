@@ -267,7 +267,7 @@ function commissieOpslaan_(overschrijf) {
       if (echt.length) tekst.push('De ' + echt.join(' en de ') + ' zijn' + ' opgeslagen');
       var rest = nog.filter(function (n) { return deels.indexOf(n) < 0; });
       if (rest.length) tekst.push('de ' + rest.join(' en de ') + ' nog niet');
-      if (deels.length) tekst.push('de ' + deels.join(' en de ') + ' ' + (deels.length > 1 ? 'zijn' : 'is') + ' maar gedeeltelijk opgeslagen');
+      if (deels.length) tekst.push('de ' + deels.join(' en de ') + ' zijn maar gedeeltelijk opgeslagen');
       melding = tekst.join(', ').replace(/^./, function (c) { return c.toUpperCase(); }) + ': ' + melding;
     }
     commissie.fout = melding;
@@ -416,12 +416,12 @@ function commissieVeld_(label, invoer, meldingSleutel) {
 function commissieLidRij_(lid, staat) {
   var rolNamen = commissieRolNamen_(commissie.rollen);
   var jij = commissieMail_(lid.email) === commissieMail_(staat.email) && lid.email !== '';
-  var naamInvoer = el('input', { type: 'text', autocomplete: 'off', maxlength: 200, 'data-fokus': 'naam-' + lid.sleutel, placeholder: 'Bijvoorbeeld Anna de Vries' });
+  var naamInvoer = el('input', { type: 'text', autocomplete: 'off', maxlength: 120, 'data-fokus': 'naam-' + lid.sleutel, placeholder: 'Bijvoorbeeld Anna de Vries' });
   naamInvoer.value = lid.naam;
   naamInvoer.addEventListener('input', function () { lid.naam = naamInvoer.value; commissieNaWijziging_(); });
   var mailBlok;
   if (lid.nieuw) {
-    var mailInvoer = el('input', { type: 'email', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false', maxlength: 200, 'data-fokus': 'mail-' + lid.sleutel, placeholder: 'naam@voorbeeld.nl' });
+    var mailInvoer = el('input', { type: 'email', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false', maxlength: 120, 'data-fokus': 'mail-' + lid.sleutel, placeholder: 'naam@voorbeeld.nl' });
     mailInvoer.value = lid.email;
     mailInvoer.addEventListener('input', function () { lid.email = mailInvoer.value; commissieNaWijziging_(); });
     mailInvoer.addEventListener('blur', function () { commissie.aangeraakt[lid.sleutel] = true; commissieVerfris_(); });
@@ -474,7 +474,7 @@ function commissieRolKaart_(rol) {
   var rechtenTekst = el('span', { class: 'rol-aantal', 'data-rol-aantal': rol.sleutel });
   var omschrijvingInvoer = null;
   if (!vast) {
-    omschrijvingInvoer = el('input', { type: 'text', maxlength: 200, 'data-fokus': 'omschrijving-' + rol.sleutel, placeholder: 'Bijvoorbeeld: kijkt mee en dient bonnen in' });
+    omschrijvingInvoer = el('input', { type: 'text', maxlength: 120, 'data-fokus': 'omschrijving-' + rol.sleutel, placeholder: 'Bijvoorbeeld: kijkt mee en dient bonnen in' });
     omschrijvingInvoer.value = rol.omschrijving;
     omschrijvingInvoer.addEventListener('input', function () { rol.omschrijving = omschrijvingInvoer.value; commissieNaWijziging_(); });
   }
@@ -519,7 +519,7 @@ function commissieNieuweRol_() {
   var naam = el('input', { type: 'text', maxlength: 60, 'data-fokus': 'nieuwe-rol-naam', placeholder: 'Bijvoorbeeld Fotograaf' });
   naam.value = nr.naam;
   naam.addEventListener('input', function () { nr.naam = naam.value; if (nr.melding) { nr.melding = ''; commissieVerfris_(); } });
-  var uitleg = el('input', { type: 'text', maxlength: 200, 'data-fokus': 'nieuwe-rol-uitleg', placeholder: 'Wat doet deze rol?' });
+  var uitleg = el('input', { type: 'text', maxlength: 120, 'data-fokus': 'nieuwe-rol-uitleg', placeholder: 'Wat doet deze rol?' });
   uitleg.value = nr.omschrijving;
   uitleg.addEventListener('input', function () { nr.omschrijving = uitleg.value; });
   var formulier = el('form', { class: 'nieuwe-rol', novalidate: true, onsubmit: function (e) { e.preventDefault(); commissieRolToevoegen_(); } },

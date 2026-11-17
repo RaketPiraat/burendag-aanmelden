@@ -99,7 +99,7 @@ function controleerRollen(rollen, leden) {
     }
   }
   // Een rolnaam staat als tekst in een lijst met komma's in de Sheet: alleen letters, cijfers, spaties en streepjes.
-  var namen = Object.keys(rollen || {});
+  namen = Object.keys(rollen || {});
   for (var q = 0; q < namen.length; q++) {
     if (!/^[A-Za-z0-9\u00C0-\u024F][A-Za-z0-9\u00C0-\u024F \-]{0,39}$/.test(namen[q]) || namen[q] === 'constructor') {
       meldingen.push('De naam van de rol "' + namen[q] + '" mag alleen letters, cijfers, spaties en streepjes bevatten (hooguit 40 tekens).');

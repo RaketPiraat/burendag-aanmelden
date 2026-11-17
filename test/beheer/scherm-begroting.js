@@ -192,7 +192,7 @@ function begrTabel_(titel, soort, posten, begroot, werkelijk, leegTekst) {
     el('table', { class: 'tabel begr-tabel' },
       el('caption', { class: 'verborgen' }, titel),
       el('thead', null, el('tr', null,
-        el('th', { scope: 'col' }, 'Post'), el('th', { scope: 'col', class: 'getal' }, 'Begroot'), el('th', { scope: 'col', class: 'getal' }, 'Werkelijk tot nu'),
+        el('th', { scope: 'col' }, 'Post'), el('th', { scope: 'col', class: 'getal' }, 'Begroot'), el('th', { scope: 'col', class: 'getal' }, soort === 'inkomst' ? 'Werkelijk tot nu (toegezegd + ontvangen)' : 'Werkelijk tot nu'),
         el('th', { scope: 'col' }, 'Stand'), el('th', { scope: 'col' }, el('span', { class: 'verborgen' }, 'Acties')))),
       el('tbody', null, lijst, totaal)))];
 }

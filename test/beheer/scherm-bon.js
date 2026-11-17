@@ -341,7 +341,7 @@ function bonOntvangen_() {
   return el('section', { class: 'kaart bon-ontvangen', role: 'status' },
     el('span', { class: 'bon-vink' }, maakIcoon('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 'pictogram groot')),
     el('h2', null, 'Bon ontvangen ✓'),
-    el('p', null, '€ ' + (l.bedrag || '') + (l.omschrijving ? ' voor ' + l.omschrijving : '') + '. De penningmeester boekt hem binnen een minuut.'),
+    el('p', null, '€ ' + (l.bedrag || '') + (l.omschrijving ? ' voor ' + l.omschrijving : '') + '. Het systeem boekt hem binnen een minuut; de penningmeester betaalt hem daarna terug.'),
     el('button', { type: 'button', class: 'knop knop-hoofd knop-breed', id: 'bon-nog-een', onclick: bonNogEen_ }, 'Nog een bon'));
 }
 

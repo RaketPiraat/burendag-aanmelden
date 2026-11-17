@@ -7,7 +7,8 @@
 // Hulpmiddelen voor de schermen: el(), euro(), maakIcoon(), ICONEN. Tekst gaat nooit via innerHTML.
 // Vereist (in deze volgorde geladen): config.js, gedeeld/rechten.js, wachtrij.js, api.js.
 
-var NA_OPDRACHT_LEZEN_MS = 70000;   // zo lang doet het achterwerk er hooguit over om een opdracht te verwerken
+var LEES_INTERVAL_MS = 30000;       // wacht de pagina op het verwerken van een opdracht, dan zo vaak opnieuw lezen
+var LEES_MAX_MS = 600000;           // ... en daar na zo lang mee stoppen (10 minuten)
 var NOG_EEN_POGING_MS = 30000;      // blijft er iets in de wachtrij staan, dan na zo lang opnieuw proberen
 var VERVERS_NA_MS = 60000;          // terugkomen op de pagina na zo lang: opnieuw lezen
 // Op de telefoon is er per knop weinig plek: een eigen kortTitel van het scherm, of deze, of de gewone titel.
@@ -31,7 +32,7 @@ var ICONEN = {
 var SCHERMEN = [];
 var beheerApp = {
   sessie: null, momentopname: null, bijgewerktOp: 0, offline: false, leesFout: false,
-  tekstInloggen: '', bericht: '', tijdLezen: null, tijdOpnieuw: null, bezig: false, syncNr: 0, uitgesteld: false, vlucht: null, schilGebouwd: false, huidig: null
+  tekstInloggen: '', bericht: '', tijdLezen: null, tijdOpnieuw: null, leesLopend: null, pollTot: 0, bezig: false, syncNr: 0, uitgesteld: false, vlucht: null, schilGebouwd: false, huidig: null
 };
 
 // ---- kleine hulpmiddelen ----
@@ -122,7 +123,8 @@ function hashDelen_() {
 }
 
 function bouwStaat_() {
-  var m = samenvoegMetMomentopname(beheerApp.momentopname, wachtrijLees(beheerOpslag));
+  var verstuurd = verstuurdOpruim(beheerOpslag, beheerApp.momentopname, Date.now());
+  var m = samenvoegMetMomentopname(beheerApp.momentopname, wachtrijLees(beheerOpslag), verstuurd);
   return {
     momentopname: m,
     rechten: rechtenNu_(),
@@ -148,6 +150,7 @@ function bewaarMomentopname_(gegevens) {
   beheerApp.momentopname = gegevens;
   beheerApp.bijgewerktOp = Date.now();
   beheerOpslag.schrijf('momentopname', { op: beheerApp.bijgewerktOp, gegevens: gegevens });
+  verstuurdOpruim(beheerOpslag, gegevens, Date.now()); // wat de server nu kent, hoeft niet meer apart te worden getoond
 }
 
 // Na een geslaagde login (de inlogknop van het inlogscherm roept dit aan met het antwoord van beheerInloggen).
@@ -157,9 +160,10 @@ function inloggenGelukt(antwoord) {
   if (vorige !== antwoord.email) {
     // een ander lid op dit apparaat: niets van de vorige houden
     var weg = vorige ? wachtrijLees(beheerOpslag).length : 0;
-    beheerOpslag.wis('momentopname'); beheerOpslag.wis('wachtrij'); beheerOpslag.wis('mislukt');
+    beheerOpslag.wis('momentopname'); beheerOpslag.wis('wachtrij'); beheerOpslag.wis('verstuurd'); beheerOpslag.wis('mislukt');
     beheerApp.momentopname = null;
     if (typeof bonVergeet === 'function') bonVergeet();
+  if (typeof kasVergeet === 'function') kasVergeet();
     if (weg > 0) beheerApp.bericht = 'Er ' + (weg === 1 ? 'stond' : 'stonden') + ' nog ' + meervoud_(weg, 'handeling', 'handelingen') + ' van een ander account op dit apparaat. Die ' + (weg === 1 ? 'is' : 'zijn') + ' niet verstuurd en verwijderd.';
   }
   beheerApp.bezig = false;
@@ -173,10 +177,16 @@ function inloggenGelukt(antwoord) {
   synchroniseer_();
 }
 
-// De sessie is verlopen of ontbreekt: terug naar het inlogscherm; de wachtrij en de bewaarde gegevens blijven staan.
+// De sessie is verlopen of ontbreekt: terug naar het inlogscherm. De wachtrij en de verstuurde opdrachten blijven staan,
+// de bewaarde momentopname gaat weg (die kan gegevens bevatten van iemand die er niet meer bij hoort).
 function naarInloggen_(melding) {
   beheerOpslag.wis('sessie');
+  beheerOpslag.wis('momentopname');
   beheerApp.sessie = null;
+  beheerApp.momentopname = null;
+  beheerApp.bijgewerktOp = 0;
+  beheerApp.pollTot = 0;
+  if (typeof kasVergeet === 'function') kasVergeet(); // een open bonfoto hoort niet boven het inlogscherm te blijven staan
   beheerApp.tekstInloggen = melding || '';
   beheerApp.bezig = false;
   clearTimeout(beheerApp.tijdLezen); clearTimeout(beheerApp.tijdOpnieuw);
@@ -187,11 +197,13 @@ function naarInloggen_(melding) {
 function uitloggen_() {
   var open = wachtrijLees(beheerOpslag).length;
   if (open > 0 && !window.confirm('Er ' + (open === 1 ? 'staat' : 'staan') + ' nog ' + meervoud_(open, 'handeling', 'handelingen') + ' klaar om te versturen. Als je nu uitlogt, ' + (open === 1 ? 'gaat die' : 'gaan die') + ' verloren. Toch uitloggen?')) return;
-  ['sessie', 'momentopname', 'wachtrij', 'mislukt', 'email'].forEach(function (n) { beheerOpslag.wis(n); });
+  ['sessie', 'momentopname', 'wachtrij', 'verstuurd', 'mislukt', 'email'].forEach(function (n) { beheerOpslag.wis(n); });
   beheerApp.momentopname = null;
   if (typeof bonVergeet === 'function') bonVergeet();
+  if (typeof kasVergeet === 'function') kasVergeet();
   beheerApp.sessie = null;
   beheerApp.bijgewerktOp = 0;
+  beheerApp.pollTot = 0;
   beheerApp.tekstInloggen = '';
   beheerApp.bericht = '';
   beheerApp.bezig = false;
@@ -238,34 +250,63 @@ function stuurWachtrij_() {
 }
 
 // vers = true: de Vernieuwen-knop; het koppelscript vergeet dan zijn bewaarde gegevens en leest alles opnieuw uit de Sheet.
+// Eén lezing tegelijk (met dezelfde sessie): een tweede aanroep krijgt de lopende lezing terug. Een Vernieuwen-lezing wacht op de lopende.
 function leesNu_(vers) {
   if (!beheerApp.sessie) return Promise.resolve();
   var token = sessieToken_();
-  return beheerVerzoek('beheerLezen', vers === true ? { vers: true } : undefined).then(function (a) {
-    if (sessieToken_() !== token) return; // laat antwoord: uitgelogd of een andere login, niets meer mee doen
-    if (a && a.ok === true) {
-      var gegevens = a.gegevens || (function () { var kopie = Object.assign({}, a); delete kopie.ok; return kopie; })();
-      bewaarMomentopname_(gegevens);
-      beheerApp.offline = false; beheerApp.leesFout = false;
-    } else if (a && a.code === 'SESSIE') {
-      naarInloggen_(a.melding || 'Je bent uitgelogd. Log opnieuw in.');
-      return;
-    } else {
-      beheerApp.leesFout = true;
-    }
-    vernieuwWeergave_();
-  }, function () {
-    if (sessieToken_() !== token) return;
-    beheerApp.offline = true;
-    vernieuwWeergave_();
+  var lopend = beheerApp.leesLopend;
+  if (lopend && lopend.token === token && vers !== true) return lopend.belofte;
+  var belofte = (lopend ? lopend.belofte.then(lees, lees) : lees()).then(function (r) {
+    if (beheerApp.leesLopend && beheerApp.leesLopend.belofte === belofte) beheerApp.leesLopend = null;
+    return r;
   });
+  beheerApp.leesLopend = { token: token, belofte: belofte };
+  return belofte;
+
+  function lees() {
+    if (sessieToken_() !== token) return Promise.resolve();
+    return beheerVerzoek('beheerLezen', vers === true ? { vers: true } : undefined).then(function (a) {
+      if (sessieToken_() !== token) return; // laat antwoord: uitgelogd of een andere login, niets meer mee doen
+      if (a && a.ok === true) {
+        var gegevens = a.gegevens || (function () { var kopie = Object.assign({}, a); delete kopie.ok; return kopie; })();
+        bewaarMomentopname_(gegevens);
+        beheerApp.offline = false; beheerApp.leesFout = false;
+      } else if (a && a.code === 'SESSIE') {
+        naarInloggen_(a.melding || 'Je bent uitgelogd. Log opnieuw in.');
+        return;
+      } else {
+        beheerApp.leesFout = true;
+      }
+      planVolgendeLezing_();
+      vernieuwWeergave_();
+    }, function () {
+      if (sessieToken_() !== token) return;
+      beheerApp.offline = true;
+      vernieuwWeergave_();
+    });
+  }
+}
+
+// Wacht er nog een opdracht op verwerking (de server heeft hem nog niet of op 'nieuw'), dan elke 30 seconden opnieuw lezen:
+// hooguit 10 minuten lang en niet terwijl de pagina verborgen is (bij terugkomen leest de pagina weer en gaat dit verder).
+function planVolgendeLezing_() {
+  if (!beheerApp.sessie) return;
+  var verstuurd = verstuurdOpruim(beheerOpslag, beheerApp.momentopname, Date.now());
+  if (!wachtOpVerwerking(beheerApp.momentopname, verstuurd)) { beheerApp.pollTot = 0; return; }
+  var nu = Date.now();
+  if (beheerApp.pollTot === 0) beheerApp.pollTot = nu + LEES_MAX_MS;
+  if (nu + LEES_INTERVAL_MS > beheerApp.pollTot || document.visibilityState === 'hidden') return;
+  plan_('lezen', LEES_INTERVAL_MS);
 }
 
 // Plant een synchronisatie over een tijd; een eerder geplande van dezelfde soort vervalt.
 function plan_(soort, ms) {
   var sleutel = soort === 'opnieuw' ? 'tijdOpnieuw' : 'tijdLezen';
   clearTimeout(beheerApp[sleutel]);
-  beheerApp[sleutel] = setTimeout(function () { synchroniseer_(); }, ms);
+  beheerApp[sleutel] = setTimeout(function () {
+    if (beheerApp.bezig) { plan_(soort, 5000); return; } // er loopt al een ronde; zo raakt een geplande lezing niet kwijt
+    synchroniseer_();
+  }, ms);
 }
 
 function synchroniseer_(vers) {
@@ -277,15 +318,20 @@ function synchroniseer_(vers) {
   return stuurWachtrij_().then(function () { return beheerApp.sessie ? leesNu_(vers === true) : undefined; }).then(klaar, klaar);
 }
 
-// Voor de schermen: zet een opdracht in de wachtrij, probeert hem meteen te versturen en leest na 70 seconden opnieuw
-// (dan heeft het achterwerk hem verwerkt). Geeft { id } terug zodra hij veilig in de wachtrij staat.
+// Voor de schermen: zet een opdracht in de wachtrij, probeert hem meteen te versturen en leest daarna meteen opnieuw, zodat hij als
+// 'wordt verwerkt' (status nieuw) uit de server terugkomt; daarna leest planVolgendeLezing_ tot het achterwerk klaar is.
+// Geeft { id } terug zodra hij veilig in de wachtrij staat.
 function stuurOpdracht(type, gegevens) {
   var opdracht = { id: nieuwOpdrachtId(), type: type, gegevens: gegevens || {} };
   wachtrijVoegToe(beheerOpslag, opdracht);
   vernieuwWeergave_();
-  stuurWachtrij_().then(function () {
+  stuurWachtrij_().then(function (r) {
     vernieuwWeergave_();
-    if (beheerApp.sessie) plan_('lezen', NA_OPDRACHT_LEZEN_MS);
+    if (!beheerApp.sessie) return;
+    if (r && r.verstuurd > 0) {
+      beheerApp.pollTot = Date.now() + LEES_MAX_MS;
+      leesNu_();
+    }
   }, function () { vernieuwWeergave_(); });
   return { id: opdracht.id };
 }
@@ -511,7 +557,10 @@ function startBeheer_() {
   window.addEventListener('hashchange', function () { if (beheerApp.schilGebouwd) kiesScherm_(true); });
   window.addEventListener('online', function () { synchroniseer_(); });
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible' && beheerApp.sessie && Date.now() - beheerApp.bijgewerktOp > VERVERS_NA_MS) synchroniseer_();
+    if (document.visibilityState === 'hidden') clearTimeout(beheerApp.tijdLezen); // verborgen pagina: niet blijven lezen
+    if (document.visibilityState !== 'visible' || !beheerApp.sessie) return;
+    if (Date.now() - beheerApp.bijgewerktOp > VERVERS_NA_MS) synchroniseer_();
+    else planVolgendeLezing_(); // wacht er nog een opdracht op verwerking, dan gaat het lezen verder
   });
   toonApp_();
   if (beheerApp.sessie) synchroniseer_();
