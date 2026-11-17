@@ -344,7 +344,7 @@ function kasTekenPaneel_(nieuw) {
   if (soort === '') { kasVak.paneel.hidden = true; kasVak.paneel.replaceChildren(); kasVak.paneelSoort = ''; return; }
   kasVak.paneel.hidden = false;
   if (soort === 'slot') {
-    var weg = kasStaat.uitslag && kasStaat.uitslag.akkoord ? kasUitslagBlok_() : null;
+    var weg = kasStaat.uitslag && kasStaat.uitslag.akkoord ? kasUitslagBlok_() : '';
     kasVak.paneel.replaceChildren(
       el('div', { class: 'kas-paneelkop' }, maakIcoon(KAS_ICOON_CONTROLE), el('h2', null, 'Kascontrole')),
       el('div', { class: 'kas-slot' }, maakIcoon('<path d="M5 12.5l4.5 4.5L19 7.5"/>'), el('span', null, 'Afgesloten — de kascontrole is akkoord')),

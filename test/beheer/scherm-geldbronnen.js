@@ -195,7 +195,7 @@ function gbTekenBalk_(bronnen) {
     el('div', { class: 'gb-balk-tekst' },
       el('div', { class: 'gb-balk-titel' }, 'Eerstvolgende termijn: ' + b.naam),
       el('div', { class: 'gb-balk-sub' }, sub)),
-    gbMagBewerken_() && !b.wacht ? el('button', { type: 'button', class: 'knop gb-balk-knop', onclick: function () { gbOpenFormulier_(b); } }, 'Openen') : null);
+    gbMagBewerken_() && !b.wacht ? el('button', { type: 'button', class: 'knop gb-balk-knop', onclick: function () { gbOpenFormulier_(b); } }, 'Openen') : '');
 }
 
 function gbTekenFilter_(bronnen) {
